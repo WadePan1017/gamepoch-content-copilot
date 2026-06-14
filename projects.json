@@ -1,0 +1,7 @@
+[
+  {"id": 1, "name": "拳皇15", "stage": "运营中", "platform": "PS5/PC", "dev": "SNK", "dl": "已上线"},
+  {"id": 2, "name": "双影奇境", "stage": "营销中", "platform": "PS5", "dev": "Ultizero", "dl": "2026-Q3"},
+  {"id": 3, "name": "侍魂 晓", "stage": "运营中", "platform": "PS4/PS5", "dev": "SNK", "dl": "已上线"},
+  {"id": 4, "name": "新项目A", "stage": "谈判中", "platform": "待定", "dev": "待确认", "dl": "待定"},
+  {"id": 5, "name": "新项目B", "stage": "本地化中", "platform": "PC/PS5", "dev": "海外工作室", "dl": "2026-Q4"}
+]

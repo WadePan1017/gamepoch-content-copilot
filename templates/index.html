@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GamePoch Content Copilot</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f5f7fb'/%3E%3Ctext x='32' y='39' text-anchor='middle' font-size='22' font-family='Arial' font-weight='700' fill='%23080a0f'%3EGP%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        *{box-sizing:border-box}
+        body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:radial-gradient(circle at 18% -10%,rgba(59,130,246,.10),transparent 30%),radial-gradient(circle at 85% 0%,rgba(14,165,233,.08),transparent 28%),#f6f8fb;color:#0f172a}
+        section{scroll-margin-top:88px}
+        ::-webkit-scrollbar{width:8px;height:8px}
+        ::-webkit-scrollbar-track{background:#eef2f7}
+        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+        body aside{background:rgba(255,255,255,.92)!important;border-color:#e2e8f0!important}
+        body header{background:rgba(255,255,255,.86)!important;border-color:#e2e8f0!important;box-shadow:0 1px 0 rgba(15,23,42,.04)}
+        .panel{background:rgba(255,255,255,.92);border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 18px 45px rgba(15,23,42,.06)}
+        .panel-soft{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px}
+        .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #dbe3ef;background:#f8fafc;color:#475569;border-radius:999px;padding:5px 9px;font-size:12px}
+        .nav-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;color:#64748b;font-size:13px;font-weight:500;transition:all .15s}
+        .nav-item:hover,.nav-item.active{background:#eff6ff;color:#0f172a}
+        .nav-item.active{box-shadow:inset 2px 0 0 #2563eb}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap}
+        .btn-primary{background:#0f172a;color:white;border:1px solid #0f172a}
+        .btn-primary:hover{background:#1e293b;border-color:#1e293b}
+        .btn-secondary{background:white;border:1px solid #dbe3ef;color:#334155}
+        .btn-secondary:hover{border-color:#94a3b8;background:#f8fafc}
+        .btn-ghost{color:#64748b}
+        .btn-ghost:hover{background:#f1f5f9;color:#0f172a}
+        .opportunity{border:1px solid #e2e8f0;background:white;border-radius:8px;transition:all .15s}
+        .opportunity:hover,.opportunity.active{border-color:#2563eb;background:#f8fbff;box-shadow:0 0 0 1px rgba(37,99,235,.08),0 14px 30px rgba(15,23,42,.06)}
+        .event-card{border:1px solid #e2e8f0;background:white;border-radius:8px;transition:all .15s}
+        .event-card:hover,.event-card.active{border-color:#2563eb;background:#f8fbff}
+        .metric{background:linear-gradient(180deg,#ffffff,#f8fafc);border:1px solid #e2e8f0;border-radius:8px;padding:14px}
+        .copy-block{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;white-space:pre-wrap;line-height:1.65;color:#0f172a;font-size:13px}
+        .task-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;color:#0f172a;font-size:13px;line-height:1.55}
+        .tab.active{background:#0f172a;border-color:#0f172a;color:white}
+        .phase-tab.active{background:#eff6ff;border-color:#60a5fa;color:#1d4ed8}
+        .media-placeholder{height:100%;width:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e0f2fe,#f8fafc);color:#2563eb;font-size:12px;font-weight:700;letter-spacing:.04em}
+        .text-white{color:#0f172a!important}
+        .text-slate-300{color:#334155!important}
+        .text-slate-400{color:#475569!important}
+        .text-slate-500{color:#64748b!important}
+        .text-slate-600{color:#94a3b8!important}
+        .text-lime-200,.text-sky-300,.text-sky-200{color:#2563eb!important}
+        .text-red-300{color:#dc2626!important}
+        .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+        @media(max-width:1023px){section{scroll-margin-top:132px}}
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
+        <aside class="hidden lg:sticky lg:top-0 lg:h-screen lg:self-start lg:flex lg:flex-col border-r border-[#e2e8f0] bg-[#ffffff]/95">
+            <div class="h-16 flex items-center gap-3 px-5 border-b border-[#e2e8f0]">
+                <div class="w-9 h-9 rounded-lg bg-[#0f172a] flex items-center justify-center text-[#ffffff] font-semibold tracking-tight">GP</div>
+                <div>
+                    <div class="text-sm font-semibold tracking-tight text-white">GamePoch</div>
+                    <div class="text-xs text-slate-500">Content Copilot</div>
+                </div>
+            </div>
+            <nav class="p-3 space-y-1">
+                <button class="nav-item active w-full" data-jump="dashboard"><i data-lucide="radar" class="w-4 h-4"></i> 今日工作台</button>
+                <button class="nav-item w-full" data-jump="opportunities"><i data-lucide="flame" class="w-4 h-4"></i> 热点发现</button>
+                <button class="nav-item w-full" data-jump="generator"><i data-lucide="wand-sparkles" class="w-4 h-4"></i> 内容生成</button>
+                <button class="nav-item w-full" data-jump="events"><i data-lucide="calendar-days" class="w-4 h-4"></i> 活动规划</button>
+                <button class="nav-item w-full" data-jump="calendar"><i data-lucide="calendar-check" class="w-4 h-4"></i> 发布排期</button>
+                <button class="nav-item w-full" data-jump="daily"><i data-lucide="file-text" class="w-4 h-4"></i> 简报导出</button>
+            </nav>
+            <div class="mt-auto p-4">
+                <div class="panel-soft p-4">
+                    <div class="text-xs font-semibold text-slate-300 mb-2">内容工作流</div>
+                    <p class="text-xs leading-5 text-slate-500">热点发现、内容生成、活动准备、发布排期和简报导出集中在一个工作台。</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="min-w-0">
+            <header class="sticky top-0 z-40 border-b border-[#e2e8f0] bg-[#ffffff]/86 backdrop-blur-xl">
+                <div class="h-16 px-4 sm:px-6 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="lg:hidden w-9 h-9 rounded-lg bg-[#0f172a] flex items-center justify-center text-[#ffffff] font-semibold">GP</div>
+                        <div>
+                            <h1 class="text-base sm:text-lg font-semibold tracking-tight text-white">GamePoch Content Copilot</h1>
+                            <p class="text-xs text-slate-500">Signal → Angle → Script → Report</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="syncTime" class="hidden sm:inline text-xs text-slate-500">同步中...</span>
+                        <button id="refreshBtn" class="btn btn-secondary"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span class="hidden sm:inline">刷新</span></button>
+                    </div>
+                </div>
+                <div class="lg:hidden px-4 pb-3 overflow-x-auto">
+                    <div class="flex gap-2 min-w-max">
+                        <button class="nav-item active" data-jump="dashboard"><i data-lucide="radar" class="w-4 h-4"></i> 工作台</button>
+                        <button class="nav-item" data-jump="opportunities"><i data-lucide="flame" class="w-4 h-4"></i> 热点</button>
+                        <button class="nav-item" data-jump="generator"><i data-lucide="wand-sparkles" class="w-4 h-4"></i> 生成</button>
+                        <button class="nav-item" data-jump="events"><i data-lucide="calendar-days" class="w-4 h-4"></i> 活动</button>
+                        <button class="nav-item" data-jump="calendar"><i data-lucide="calendar-check" class="w-4 h-4"></i> 排期</button>
+                        <button class="nav-item" data-jump="daily"><i data-lucide="file-text" class="w-4 h-4"></i> 简报</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-8">
+                <section id="dashboard" class="space-y-5">
+                    <div class="grid gap-4 xl:grid-cols-[1.3fr_.7fr]">
+                        <div class="panel p-5 sm:p-6">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                <div>
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        <div class="chip"><i data-lucide="activity" class="w-3.5 h-3.5"></i> 今日内容机会雷达</div>
+                                        <div class="chip"><i data-lucide="badge-info" class="w-3.5 h-3.5"></i> 游戏发行内容工作台</div>
+                                    </div>
+                                    <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-white">把 3 小时选题会压缩到 10 分钟</h2>
+                                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-400">面向游戏发行团队的内容效率工具，把热点发现、脚本生成、活动准备、发布排期和团队简报整合成一条可执行链路。</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="btn btn-primary" onclick="jumpTo('generator')"><i data-lucide="play" class="w-4 h-4"></i> 生成内容</button>
+                                    <button class="btn btn-secondary" onclick="jumpTo('events')"><i data-lucide="calendar-days" class="w-4 h-4"></i> 活动规划</button>
+                                    <button class="btn btn-secondary" onclick="jumpTo('daily')"><i data-lucide="download" class="w-4 h-4"></i> 简报</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6" id="statsGrid"></div>
+                        </div>
+                        <div class="panel p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-sm font-semibold text-white">机会类型</h3>
+                                <span class="text-xs text-slate-500">实时抓取 + 规则分析</span>
+                            </div>
+                            <div class="h-56"><canvas id="mixChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div id="heroCard" class="panel p-5"></div>
+                </section>
+
+                <section id="opportunities" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-semibold tracking-tight text-white">热点发现</h2>
+                            <p class="text-sm text-slate-500 mt-1">优先展示最适合当天做内容的游戏和海外资讯。</p>
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto pb-1" id="filterBar">
+                            <button class="btn btn-secondary tab active" data-filter="all">全部</button>
+                            <button class="btn btn-secondary tab" data-filter="game">Steam</button>
+                            <button class="btn btn-secondary tab" data-filter="news">海外资讯</button>
+                        </div>
+                    </div>
+                    <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+                        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3" id="opportunityGrid"></div>
+                        <aside class="panel p-4 h-fit lg:sticky lg:top-24" id="analysisPanel"></aside>
+                    </div>
+                </section>
+
+                <section id="generator" class="space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-semibold tracking-tight text-white">内容一键生产</h2>
+                            <p class="text-sm text-slate-500 mt-1">选择热点，或输入任意游戏/资讯，生成标题、分镜、素材清单、发布文案和可分配的剪辑工作单。</p>
+                        </div>
+                        <div class="panel-soft p-2 flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                            <input id="customTopic" class="bg-transparent outline-none px-2 py-2 text-sm text-white placeholder:text-slate-600 min-w-0 sm:w-80" placeholder="输入游戏名，例如 艾尔登法环：黑夜君临">
+                            <button id="customGenerateBtn" class="btn btn-primary" onclick="generateCustom()"><i data-lucide="sparkles" class="w-4 h-4"></i> 自定义生成</button>
+                        </div>
+                    </div>
+                    <div class="panel p-4" id="workOrderPanel"></div>
+                    <div class="grid gap-4 xl:grid-cols-[1fr_1fr]">
+                        <div class="panel p-4" id="titlesPanel"></div>
+                        <div class="panel p-4" id="scriptsPanel"></div>
+                    </div>
+                    <div class="grid gap-4 lg:grid-cols-2">
+                        <div class="panel p-4" id="coverPanel"></div>
+                        <div class="panel p-4" id="interviewPanel"></div>
+                    </div>
+                </section>
+
+                <section id="events" class="space-y-4">
+                    <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
+                        <div>
+                            <div class="chip mb-3"><i data-lucide="calendar-clock" class="w-3.5 h-3.5"></i> Game Event Content Planner</div>
+                            <h2 class="text-xl font-semibold tracking-tight text-white">游戏活动内容准备助手</h2>
+                            <p class="text-sm text-slate-500 mt-1">把活动前、活动当天、活动后的内容准备拆成可执行清单，服务跟拍、剪辑、运营和英语资讯整理。</p>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-0 xl:min-w-[560px]" id="eventStats"></div>
+                    </div>
+                    <div class="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)_420px]">
+                        <div class="panel p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-semibold text-white">活动日历</h3>
+                                <span class="text-xs text-slate-500">规划样例</span>
+                            </div>
+                            <div id="eventList" class="space-y-2"></div>
+                        </div>
+                        <div class="panel p-4" id="eventDetail"></div>
+                        <div class="panel p-4" id="eventPack"></div>
+                    </div>
+                </section>
+
+                <section id="calendar" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <div class="chip mb-3"><i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> 7-Day Publishing Plan</div>
+                            <h2 class="text-xl font-semibold tracking-tight text-white">7日内容发布排期</h2>
+                            <p class="text-sm text-slate-500 mt-1">把热点、活动准备和平台选题转成可执行任务，明确平台、形式、负责人和素材需求。</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary" onclick="copyCalendar()"><i data-lucide="copy" class="w-4 h-4"></i> 复制排期</button>
+                            <button class="btn btn-primary" onclick="downloadCalendar()"><i data-lucide="download" class="w-4 h-4"></i> 导出 Markdown</button>
+                        </div>
+                    </div>
+                    <div id="calendarSummary" class="grid gap-3 md:grid-cols-3"></div>
+                    <div class="grid gap-3" id="calendarList"></div>
+                </section>
+
+                <section id="daily" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-semibold tracking-tight text-white">内容作战简报</h2>
+                            <p class="text-sm text-slate-500 mt-1">把热点、活动准备、执行动作和风险提醒合并成可直接发给负责人的汇报底稿。</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary" onclick="copyDaily()"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>
+                            <button class="btn btn-secondary" onclick="downloadBriefDocx()"><i data-lucide="file-down" class="w-4 h-4"></i> 导出 Word</button>
+                            <button class="btn btn-primary" onclick="downloadDaily()"><i data-lucide="download" class="w-4 h-4"></i> 导出 Markdown</button>
+                        </div>
+                    </div>
+                    <div id="briefSummary" class="grid gap-3 md:grid-cols-3"></div>
+                    <div class="panel p-4">
+                        <pre id="dailyText" class="copy-block min-h-[320px] overflow-x-auto">简报生成中...</pre>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+<script>
+const state = {
+    data: null,
+    selected: null,
+    pack: null,
+    daily: '',
+    brief: null,
+    calendar: null,
+    events: null,
+    selectedEventId: null,
+    eventDetail: null,
+    eventPhase: 'pre',
+    filter: 'all',
+    chart: null,
+    scriptTab: '30s',
+    generationVariant: 0
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+function setActiveNav(id){
+    document.querySelectorAll('.nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.jump === id));
+}
+
+function jumpTo(id){
+    setActiveNav(id);
+    document.querySelectorAll('main section').forEach(section => {
+        section.classList.toggle('hidden', section.id !== id);
+    });
+    window.scrollTo({top:0, behavior:'smooth'});
+}
+
+document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', () => jumpTo(btn.dataset.jump)));
+document.querySelectorAll('#filterBar .tab').forEach(btn => btn.addEventListener('click', () => {
+    state.filter = btn.dataset.filter;
+    document.querySelectorAll('#filterBar .tab').forEach(item => item.classList.remove('active'));
+    btn.classList.add('active');
+    renderOpportunities();
+}));
+
+async function loadAll(force=false){
+    $('refreshBtn').disabled = true;
+    $('syncTime').textContent = '同步中...';
+    try{
+        const ops = await fetch(`/api/content/opportunities?refresh=${force ? 1 : 0}&t=${Date.now()}`).then(r => r.json());
+        const [daily, events, calendar] = await Promise.all([
+            fetch('/api/content/brief').then(r => r.json()),
+            fetch('/api/events/planner').then(r => r.json()),
+            fetch('/api/content/calendar').then(r => r.json())
+        ]);
+        state.data = ops;
+        state.daily = daily.markdown;
+        state.brief = daily;
+        state.events = events;
+        state.calendar = calendar;
+        state.generationVariant = force ? state.generationVariant + 1 : state.generationVariant;
+        state.selectedEventId = events.events?.[0]?.id || null;
+        state.selected = ops.hero || ops.opportunities[0];
+        $('syncTime').textContent = `更新：${ops.time} · R${ops.refresh_id || 0}`;
+        renderAll();
+        if(state.selectedEventId) await loadEventDetail(state.selectedEventId, false);
+        if(state.selected) await generateFor(state.selected);
+    }catch(err){
+        $('opportunityGrid').innerHTML = `<div class="panel p-6 text-sm text-red-300">数据加载失败，请确认后端服务和网络可用。</div>`;
+        $('syncTime').textContent = '加载失败';
+    }finally{
+        $('refreshBtn').disabled = false;
+        lucide.createIcons({attrs:{'stroke-width':1.5}});
+    }
+}
+
+function renderAll(){
+    renderStats();
+    renderHero();
+    renderOpportunities();
+    renderAnalysis();
+    renderDaily();
+    renderEventShell();
+    renderCalendar();
+    renderChart();
+}
+
+function renderStats(){
+    const s = state.data?.stats || {};
+    const metrics = [
+        ['今日内容机会', s.opportunities || 0, '从Steam和海外资讯聚合'],
+        ['推荐短视频选题', s.short_video_topics || 0, '可直接进入脚本生成'],
+        ['海外资讯', s.news_items || 0, 'IGN / GameSpot / PC Gamer'],
+        ['高优先级风险', s.risk_items || 0, '适合人工复核后发布']
+    ];
+    $('statsGrid').innerHTML = metrics.map(([label, value, desc]) => `
+        <div class="metric">
+            <div class="text-2xl font-semibold tracking-tight text-white">${esc(value)}</div>
+            <div class="mt-1 text-sm font-medium text-slate-300">${esc(label)}</div>
+            <div class="mt-1 text-xs leading-5 text-slate-500">${esc(desc)}</div>
+        </div>
+    `).join('');
+}
+
+function renderHero(){
+    const hero = state.selected;
+    if(!hero){ $('heroCard').innerHTML = ''; return; }
+    $('heroCard').innerHTML = `
+        <div class="grid gap-5 lg:grid-cols-[220px_1fr_auto] lg:items-center">
+            <div class="h-32 rounded-lg border border-[#dbe3ef] bg-[#f8fafc] overflow-hidden">
+                ${hero.image ? `<img src="${esc(hero.image)}" alt="" class="w-full h-full object-cover">` : `<div class="media-placeholder">精选内容</div>`}
+            </div>
+            <div>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="chip">${esc(hero.source)}</span>
+                    <span class="chip">热度 ${esc(hero.heat)}</span>
+                    ${(hero.tags || []).map(tag => `<span class="chip">${esc(tag)}</span>`).join('')}
+                </div>
+                <h3 class="text-xl font-semibold tracking-tight text-white">${esc(hero.title)}</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-400">${esc(hero.summary)}</p>
+                <p class="mt-2 text-sm text-lime-200">推荐角度：${esc(hero.angle)}</p>
+            </div>
+            <div class="flex lg:flex-col gap-2">
+                <button class="btn btn-primary" onclick="generateForSelected()"><i data-lucide="wand-sparkles" class="w-4 h-4"></i> 生成内容</button>
+                ${hero.url ? `<a class="btn btn-secondary" href="${esc(hero.url)}" target="_blank" rel="noopener"><i data-lucide="external-link" class="w-4 h-4"></i> 查看来源</a>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function visibleOpportunities(){
+    const list = state.data?.opportunities || [];
+    if(state.filter === 'all') return list;
+    return list.filter(item => item.type === state.filter);
+}
+
+function renderOpportunities(){
+    const list = visibleOpportunities();
+    $('opportunityGrid').innerHTML = list.map(item => `
+        <button class="opportunity text-left p-3 ${state.selected?.id === item.id ? 'active' : ''}" onclick='selectOpportunity(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+            <div class="flex items-start gap-3">
+                <div class="w-16 h-12 rounded-md bg-[#f8fafc] border border-[#dbe3ef] overflow-hidden shrink-0">
+                    ${item.image ? `<img src="${esc(item.image)}" class="w-full h-full object-cover" alt="">` : `<div class="media-placeholder">精选</div>`}
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[11px] text-lime-200">${esc(item.source)}</span>
+                        <span class="text-[11px] text-slate-600">热度 ${esc(item.heat)}</span>
+                    </div>
+                    <div class="font-semibold text-sm text-white line-clamp-2">${esc(item.title)}</div>
+                </div>
+            </div>
+            <p class="mt-3 text-xs leading-5 text-slate-500 line-clamp-3">${esc(item.summary)}</p>
+            <div class="mt-3 flex flex-wrap gap-1.5">${(item.tags || []).map(tag => `<span class="chip">${esc(tag)}</span>`).join('')}</div>
+        </button>
+    `).join('') || `<div class="panel p-5 text-sm text-slate-500">暂无数据。</div>`;
+    lucide.createIcons({attrs:{'stroke-width':1.5}});
+}
+
+function selectOpportunity(item){
+    state.generationVariant = 0;
+    state.selected = item;
+    renderHero();
+    renderOpportunities();
+    renderAnalysis();
+    generateFor(item);
+}
+
+function renderAnalysis(){
+    const item = state.selected;
+    if(!item){ $('analysisPanel').innerHTML = ''; return; }
+    $('analysisPanel').innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-white">AI内容分析</h3>
+            <span class="text-xs text-slate-500">${esc(item.source)}</span>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <div class="text-xs font-semibold text-slate-400 mb-1">为什么值得做</div>
+                <p class="text-sm leading-6 text-slate-300">${esc(item.summary)}</p>
+            </div>
+            <div>
+                <div class="text-xs font-semibold text-slate-400 mb-1">推荐切入角度</div>
+                <p class="text-sm leading-6 text-lime-200">${esc(item.angle)}</p>
+            </div>
+            <div>
+                <div class="text-xs font-semibold text-slate-400 mb-2">适合产出</div>
+                <div class="flex flex-wrap gap-2">${(item.recommended_formats || []).map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div>
+            </div>
+            <button class="btn btn-primary w-full" onclick="generateForSelected()"><i data-lucide="sparkles" class="w-4 h-4"></i> 用这个热点生成内容包</button>
+        </div>
+    `;
+}
+
+async function generateForSelected(){
+    if(state.selected) await generateFor(state.selected);
+    jumpTo('generator');
+}
+
+async function generateFor(item){
+    $('workOrderPanel').innerHTML = loadingCard('剪辑工作单生成中...');
+    $('titlesPanel').innerHTML = loadingCard('平台标题生成中...');
+    $('scriptsPanel').innerHTML = loadingCard('脚本生成中...');
+    try{
+        state.pack = await fetch('/api/content/generate', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({...item, _variant: state.generationVariant})
+        }).then(r => r.json());
+        renderPack();
+    }catch(err){
+        $('titlesPanel').innerHTML = errorCard('内容生成失败。');
+    }finally{
+        lucide.createIcons({attrs:{'stroke-width':1.5}});
+    }
+}
+
+function loadingCard(text){ return `<div class="text-sm text-slate-500 p-4">${esc(text)}</div>`; }
+function errorCard(text){ return `<div class="text-sm text-red-300 p-4">${esc(text)}</div>`; }
+
+function renderPack(){
+    const pack = state.pack;
+    if(!pack) return;
+    const titles = pack.titles || {};
+    const titleGroups = [
+        ['bilibili','B站'],
+        ['douyin','抖音'],
+        ['xiaohongshu','小红书'],
+        ['wechat','公众号']
+    ];
+    renderWorkOrder();
+    $('titlesPanel').innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white">平台标题</h3>
+            <div class="flex gap-2">
+                <button class="btn btn-ghost" onclick="regeneratePack()"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
+                <button class="btn btn-ghost" onclick="copyText('titles')"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>
+            </div>
+        </div>
+        <div id="titles" class="space-y-3">
+            ${titleGroups.map(([key, label]) => `
+                <div class="panel-soft p-3">
+                    <div class="text-xs font-semibold text-lime-200 mb-2">${label}</div>
+                    <ul class="space-y-2">${(titles[key] || []).map(t => `<li class="text-sm leading-6 text-slate-300">${esc(t)}</li>`).join('')}</ul>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    renderScripts();
+    $('coverPanel').innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white">封面与发布文案</h3>
+            <button class="btn btn-ghost" onclick="copyText('coverText')"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>
+        </div>
+        <div id="coverText" class="space-y-3">
+            <div class="grid sm:grid-cols-3 gap-3">${(pack.cover_copy || []).map(t => `<div class="copy-block min-h-20 flex items-center justify-center text-center font-semibold">${esc(t)}</div>`).join('')}</div>
+            <div class="copy-block"><span class="font-semibold text-sky-300">抖音发布文案</span>\n${esc(pack.publish_copy?.douyin || '')}</div>
+            <div class="copy-block"><span class="font-semibold text-sky-300">小红书发布文案</span>\n${esc(pack.publish_copy?.xiaohongshu || '')}</div>
+            <div class="copy-block"><span class="font-semibold text-sky-300">B站简介</span>\n${esc(pack.publish_copy?.bilibili_desc || '')}</div>
+        </div>
+    `;
+    $('interviewPanel').innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white">剪辑执行包</h3>
+            <button class="btn btn-ghost" onclick="copyText('executionText')"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>
+        </div>
+        <div id="executionText" class="space-y-3">
+            <div>
+                <div class="text-xs font-semibold text-sky-300 mb-2">30秒分镜</div>
+                <div class="space-y-2">${(pack.shot_list || []).map(shot => `
+                    <div class="copy-block">
+                        <div class="font-semibold">${esc(shot.time)}｜${esc(shot.screen)}</div>
+                        <div class="mt-1">口播：${esc(shot.voice)}</div>
+                        <div class="mt-1 text-slate-500">剪辑：${esc(shot.edit)}</div>
+                    </div>
+                `).join('')}</div>
+            </div>
+            ${listBlock('素材清单', pack.asset_checklist)}
+            ${listBlock('剪辑注意', pack.editing_notes)}
+            ${listBlock('发布前核查', pack.risk_checklist)}
+            ${listBlock('采访问题', pack.interview)}
+        </div>
+    `;
+}
+
+function renderWorkOrder(){
+    const pack = state.pack;
+    const value = pack?.value_summary || {};
+    const tasks = pack?.owner_tasks || [];
+    $('workOrderPanel').innerHTML = `
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div>
+                <div class="chip mb-3"><i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> 可直接分配给剪辑/运营</div>
+                <h3 class="text-lg font-semibold tracking-tight text-white">剪辑工作单</h3>
+                <p class="text-sm leading-6 text-slate-500 mt-2">${esc(value.team_value || '把内容生成结果整理成可执行任务。')}</p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    <span class="chip">预计省时 ${esc(value.time_saved || '约90分钟')}</span>
+                    <span class="chip">${esc(value.best_use || '适合团队分工')}</span>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-secondary" onclick="copyWorkOrder()"><i data-lucide="copy" class="w-4 h-4"></i> 复制工作单</button>
+                <button class="btn btn-primary" onclick="downloadWorkOrder()"><i data-lucide="download" class="w-4 h-4"></i> 导出</button>
+            </div>
+        </div>
+        <div class="grid gap-3 lg:grid-cols-4 mt-4">
+            ${tasks.map(task => `
+                <div class="task-card">
+                    <div class="text-xs font-semibold text-sky-300 mb-2">${esc(task.role)}</div>
+                    <div class="text-sm leading-6">${esc(task.task)}</div>
+                    <div class="text-xs text-slate-500 mt-2">产出：${esc(task.output)}</div>
+                </div>
+            `).join('')}
+        </div>
+        <pre id="workOrderText" class="copy-block mt-4 max-h-80 overflow-auto">${esc(pack?.work_order_markdown || '')}</pre>
+    `;
+}
+
+function copyWorkOrder(){
+    navigator.clipboard?.writeText(state.pack?.work_order_markdown || '');
+}
+
+function downloadWorkOrder(){
+    const blob = new Blob([state.pack?.work_order_markdown || ''], {type:'text/markdown;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `GamePoch_Work_Order_${new Date().toISOString().slice(0,10)}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function listBlock(title, items){
+    return `
+        <div>
+            <div class="text-xs font-semibold text-sky-300 mb-2">${esc(title)}</div>
+            <div class="grid gap-2">${(items || []).map(item => `<div class="copy-block">${esc(item)}</div>`).join('')}</div>
+        </div>
+    `;
+}
+
+async function regeneratePack(){
+    if(!state.selected) return;
+    state.generationVariant += 1;
+    await generateFor(state.selected);
+}
+
+function renderScripts(){
+    const pack = state.pack;
+    const scripts = pack?.scripts || {};
+    $('scriptsPanel').innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white">短视频脚本</h3>
+            <button class="btn btn-ghost" onclick="copyText('scriptText')"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>
+        </div>
+        <div class="flex gap-2 mb-3">
+            ${['15s','30s','60s'].map(key => `<button class="btn btn-secondary tab ${state.scriptTab === key ? 'active' : ''}" onclick="state.scriptTab='${key}';renderScripts();lucide.createIcons({attrs:{'stroke-width':1.5}})">${key}</button>`).join('')}
+        </div>
+        <div id="scriptText" class="copy-block min-h-[260px]">${esc(scripts[state.scriptTab] || '')}</div>
+    `;
+}
+
+async function generateCustom(){
+    const value = $('customTopic').value.trim();
+    if(!value) return;
+    const btn = $('customGenerateBtn');
+    const old = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '生成中...';
+    try{
+        const item = await fetch('/api/content/topic?q='+encodeURIComponent(value)).then(r => r.json());
+        state.generationVariant = 0;
+        state.selected = item;
+        renderHero();
+        renderAnalysis();
+        await generateFor(item);
+        jumpTo('generator');
+    }catch(err){
+        const item = {
+            id: `custom-${Date.now()}`,
+            type: 'custom',
+            source: '手动输入',
+            title: value,
+            summary: '手动输入的内容方向，适合快速生成标题、脚本和采访提纲。',
+            angle: `${value}为什么值得玩家关注？`,
+            heat: 80,
+            tags: ['手动选题', '内容生成'],
+            recommended_formats: ['15秒短视频','30秒脚本','采访提纲','日报条目']
+        };
+        state.generationVariant = 0;
+        state.selected = item;
+        renderHero();
+        renderAnalysis();
+        await generateFor(item);
+        jumpTo('generator');
+    }finally{
+        btn.disabled = false;
+        btn.innerHTML = old;
+        lucide.createIcons({attrs:{'stroke-width':1.5}});
+    }
+}
+
+function renderDaily(){
+    $('dailyText').textContent = state.daily || '暂无简报。';
+    const brief = state.brief;
+    if(!brief){
+        $('briefSummary').innerHTML = '';
+        return;
+    }
+    const cards = [
+        ['热点优先级', `${brief.hotspots?.length || 0} 个`, brief.hotspots?.[0]?.title || '等待热点数据'],
+        ['活动准备', `${brief.events?.length || 0} 个`, (brief.events || []).map(e => e.name).join(' / ') || '暂无活动'],
+        ['今日动作', `${brief.actions?.length || 0} 条`, brief.actions?.[0] || '暂无动作']
+    ];
+    $('briefSummary').innerHTML = cards.map(([label, value, desc]) => `
+        <div class="metric">
+            <div class="text-xl font-semibold text-white">${esc(value)}</div>
+            <div class="text-sm font-medium text-slate-300 mt-1">${esc(label)}</div>
+            <div class="text-xs leading-5 text-slate-500 mt-2">${esc(desc)}</div>
+        </div>
+    `).join('');
+}
+
+function renderCalendar(){
+    const calendar = state.calendar;
+    if(!calendar){
+        $('calendarSummary').innerHTML = '';
+        $('calendarList').innerHTML = `<div class="panel p-4 text-sm text-slate-500">排期加载中...</div>`;
+        return;
+    }
+    const summary = [
+        ['排期天数', `${calendar.summary.days} 天`, '覆盖本周内容节奏'],
+        ['任务数量', `${calendar.summary.tasks} 条`, '含热点、活动和内部准备'],
+        ['平台覆盖', calendar.summary.platforms.join(' / '), 'B站、抖音、小红书、公众号']
+    ];
+    $('calendarSummary').innerHTML = summary.map(([label, value, desc]) => `
+        <div class="metric">
+            <div class="text-xl font-semibold text-white">${esc(value)}</div>
+            <div class="text-sm font-medium text-slate-300 mt-1">${esc(label)}</div>
+            <div class="text-xs leading-5 text-slate-500 mt-2">${esc(desc)}</div>
+        </div>
+    `).join('');
+    $('calendarList').innerHTML = calendar.days.map(day => `
+        <div class="panel p-4">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <div>
+                    <div class="text-sm font-semibold text-white">${esc(day.label)}｜${esc(day.date)}</div>
+                    <div class="text-xs text-slate-500 mt-1">${day.tasks.length} 个执行任务</div>
+                </div>
+                <span class="chip">${esc(day.label)}</span>
+            </div>
+            <div class="grid gap-2 lg:grid-cols-3">
+                ${day.tasks.map(task => `
+                    <div class="task-card">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-lime-200 font-semibold">${esc(task.time)} · ${esc(task.platform)}</span>
+                            <span class="text-xs text-slate-500">${esc(task.owner)}</span>
+                        </div>
+                        <div class="font-semibold text-white">${esc(task.topic)}</div>
+                        <div class="text-xs text-slate-400 mt-2">${esc(task.format)} · ${esc(task.goal)}</div>
+                        <div class="text-xs leading-5 text-slate-500 mt-2">角度：${esc(task.angle)}</div>
+                        <div class="text-xs leading-5 text-slate-500 mt-1">素材：${esc(task.asset)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function copyCalendar(){
+    navigator.clipboard?.writeText(state.calendar?.markdown || '');
+}
+
+function downloadCalendar(){
+    const blob = new Blob([state.calendar?.markdown || ''], {type:'text/markdown;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `GamePoch_Content_Calendar_${new Date().toISOString().slice(0,10)}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function renderEventShell(){
+    renderEventStats();
+    renderEventList();
+    renderEventDetail();
+    renderEventPack();
+}
+
+function renderEventStats(){
+    const s = state.events?.stats || {};
+    const metrics = [
+        ['活动', s.events || 0],
+        ['高优先级', s.high_priority || 0],
+        ['拍摄任务', s.shooting_tasks || 0],
+        ['内容包', s.content_packages || 0]
+    ];
+    $('eventStats').innerHTML = metrics.map(([label, value]) => `
+        <div class="metric py-3">
+            <div class="text-lg font-semibold text-white">${esc(value)}</div>
+            <div class="text-xs text-slate-500 mt-1">${esc(label)}</div>
+        </div>
+    `).join('');
+}
+
+function renderEventList(){
+    const events = state.events?.events || [];
+    $('eventList').innerHTML = events.map(event => `
+        <button class="event-card w-full text-left p-3 ${state.selectedEventId === event.id ? 'active' : ''}" onclick="selectEvent('${esc(event.id)}')">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <div class="font-semibold text-sm text-white">${esc(event.name)}</div>
+                    <div class="text-xs text-slate-500 mt-1">${esc(event.date)}</div>
+                </div>
+                <span class="chip ${event.priority === '高' ? 'text-sky-200' : ''}">${esc(event.priority)}</span>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-1.5">
+                <span class="chip">${esc(event.type)}</span>
+                <span class="chip">${esc(event.status)}</span>
+            </div>
+        </button>
+    `).join('') || `<div class="text-sm text-slate-500">暂无活动数据。</div>`;
+}
+
+async function selectEvent(eventId){
+    state.selectedEventId = eventId;
+    state.eventPhase = 'pre';
+    renderEventList();
+    await loadEventDetail(eventId, true);
+}
+
+async function loadEventDetail(eventId, shouldJump){
+    $('eventDetail').innerHTML = loadingCard('活动详情加载中...');
+    $('eventPack').innerHTML = loadingCard('内容准备包加载中...');
+    const detail = await fetch(`/api/events/planner/${encodeURIComponent(eventId)}`).then(r => r.json());
+    state.eventDetail = detail.error ? null : detail;
+    renderEventDetail();
+    renderEventPack();
+    if(shouldJump) jumpTo('events');
+    lucide.createIcons({attrs:{'stroke-width':1.5}});
+}
+
+function renderEventDetail(){
+    const event = state.eventDetail;
+    if(!event){
+        $('eventDetail').innerHTML = `<div class="text-sm text-slate-500">请选择一个活动。</div>`;
+        return;
+    }
+    $('eventDetail').innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+            <div>
+                <div class="chip mb-3"><i data-lucide="calendar" class="w-3.5 h-3.5"></i>${esc(event.date)}</div>
+                <h3 class="text-2xl font-semibold tracking-tight text-white">${esc(event.name)}</h3>
+                <p class="text-sm text-slate-500 mt-2">${esc(event.type)} · ${esc(event.status)}</p>
+            </div>
+            <span class="chip">优先级 ${esc(event.priority)}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div class="panel-soft p-3">
+                <div class="text-xs font-semibold text-slate-400 mb-2">适合关注的游戏品类</div>
+                <div class="flex flex-wrap gap-2">${event.focus_genres.map(x => `<span class="chip">${esc(x)}</span>`).join('')}</div>
+            </div>
+            <div class="panel-soft p-3">
+                <div class="text-xs font-semibold text-slate-400 mb-2">风险提示</div>
+                <ul class="space-y-2">${event.risks.map(x => `<li class="text-sm leading-6 text-slate-300">· ${esc(x)}</li>`).join('')}</ul>
+            </div>
+        </div>
+        <div class="panel-soft p-3 mt-4">
+            <div class="text-xs font-semibold text-slate-400 mb-2">内容机会</div>
+            <ul class="grid sm:grid-cols-3 gap-2">${event.content_opportunities.map(x => `<li class="copy-block">${esc(x)}</li>`).join('')}</ul>
+        </div>
+    `;
+}
+
+function renderEventPack(){
+    const event = state.eventDetail;
+    if(!event){
+        $('eventPack').innerHTML = `<div class="text-sm text-slate-500">请选择活动查看内容包。</div>`;
+        return;
+    }
+    const tabs = [
+        ['pre','活动前准备包'],
+        ['live','当天拍摄清单'],
+        ['post','活动后产出']
+    ];
+    $('eventPack').innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-white">活动内容包</h3>
+            <button class="btn btn-ghost" onclick="copyEventPack()"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-4">
+            ${tabs.map(([key, label]) => `<button class="btn btn-secondary phase-tab ${state.eventPhase === key ? 'active' : ''}" onclick="state.eventPhase='${key}';renderEventPack();lucide.createIcons({attrs:{'stroke-width':1.5}})">${label}</button>`).join('')}
+        </div>
+        <div id="eventPackText">${renderEventPhase(event, state.eventPhase)}</div>
+    `;
+}
+
+function renderEventPhase(event, phase){
+    if(phase === 'live'){
+        const live = event.live_event;
+        return `
+            ${eventListBlock('必拍镜头', live.must_shoot)}
+            ${eventListBlock('采访对象', live.interview_targets)}
+            ${eventListBlock('B-roll素材建议', live.b_roll)}
+            ${eventListBlock('现场短视频切片建议', live.short_clips)}
+        `;
+    }
+    if(phase === 'post'){
+        const post = event.post_event;
+        return `
+            <div class="copy-block mb-3"><span class="text-sky-300 font-semibold">30秒短视频脚本</span>\n${esc(post.script_30s)}</div>
+            <div class="copy-block mb-3"><span class="text-sky-300 font-semibold">活动复盘日报</span>\n${esc(post.recap_daily)}</div>
+            <div class="copy-block mb-3"><span class="text-sky-300 font-semibold">公众号/小红书文案</span>\n${esc(post.social_copy)}</div>
+            <div class="copy-block"><span class="text-sky-300 font-semibold">团队内部汇报摘要</span>\n${esc(post.internal_summary)}</div>
+        `;
+    }
+    const pre = event.pre_event;
+    return `
+        ${eventListBlock('预热视频选题', pre.topics)}
+        <div class="copy-block mb-3"><span class="text-sky-300 font-semibold">平台标题</span>\nB站：${esc(pre.titles.bilibili)}\n抖音：${esc(pre.titles.douyin)}\n小红书：${esc(pre.titles.xiaohongshu)}</div>
+        <div class="copy-block mb-3"><span class="text-sky-300 font-semibold">海外资讯摘要</span>\n${esc(pre.overseas_summary)}</div>
+        ${eventListBlock('采访问题', pre.interview_questions)}
+        ${eventListBlock('物料准备清单', pre.materials)}
+    `;
+}
+
+function eventListBlock(title, items){
+    return `
+        <div class="mb-3">
+            <div class="text-xs font-semibold text-sky-300 mb-2">${esc(title)}</div>
+            <div class="grid gap-2">${items.map(item => `<div class="copy-block">${esc(item)}</div>`).join('')}</div>
+        </div>
+    `;
+}
+
+function copyEventPack(){
+    navigator.clipboard?.writeText($('eventPackText')?.innerText || '');
+}
+
+function copyText(id){
+    const text = document.getElementById(id)?.innerText || '';
+    navigator.clipboard?.writeText(text);
+}
+
+function copyDaily(){
+    navigator.clipboard?.writeText(state.daily || '');
+}
+
+function downloadDaily(){
+    const blob = new Blob([state.daily || ''], {type:'text/markdown;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `GamePoch_Content_Brief_${new Date().toISOString().slice(0,10)}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+function downloadBriefDocx(){
+    window.open('/api/content/brief/docx','_blank');
+}
+
+function renderChart(){
+    const ops = state.data?.opportunities || [];
+    const steam = ops.filter(x => x.type === 'game').length;
+    const news = ops.filter(x => x.type === 'news').length;
+    const ctx = $('mixChart');
+    if(state.chart) state.chart.destroy();
+    state.chart = new Chart(ctx, {
+        type:'doughnut',
+        data:{
+            labels:['Steam热点','海外资讯'],
+            datasets:[{data:[steam, news], backgroundColor:['#2563eb','#7dd3fc'], borderColor:'#ffffff', borderWidth:3}]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            cutout:'68%',
+            plugins:{legend:{position:'bottom', labels:{color:'#475569', boxWidth:10, usePointStyle:true, pointStyle:'circle'}}}
+        }
+    });
+}
+
+$('refreshBtn').addEventListener('click', () => loadAll(true));
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons({attrs:{'stroke-width':1.5}});
+    jumpTo('dashboard');
+    loadAll();
+});
+</script>
+</body>
+</html>
