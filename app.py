@@ -572,6 +572,156 @@ CURATED_CONTENT_OPPORTUNITIES = [
 ]
 
 
+def demo_svg_image(label, bg="#e0f2fe", fg="#2563eb"):
+    safe_label = re.sub(r"[<>&]", "", label)
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'>"
+        f"<rect width='640' height='360' fill='{bg}'/>"
+        "<circle cx='560' cy='80' r='140' fill='rgba(255,255,255,.34)'/>"
+        "<circle cx='80' cy='320' r='180' fill='rgba(255,255,255,.28)'/>"
+        f"<text x='48' y='178' font-size='42' font-weight='700' font-family='Arial, sans-serif' fill='{fg}'>{safe_label}</text>"
+        f"<text x='50' y='226' font-size='20' font-family='Arial, sans-serif' fill='{fg}' opacity='.72'>Content Opportunity</text>"
+        "</svg>"
+    )
+    return "data:image/svg+xml;charset=utf-8," + svg.replace("#", "%23").replace(" ", "%20")
+
+
+EVENT_ONLY_OPPORTUNITY_IDS = {"curated-gamescom", "rank-tga-watch"}
+
+
+DEMO_IMAGE_BY_ID = {
+    "curated-phantom-blade-zero": demo_svg_image("Phantom Blade Zero", "#e0e7ff", "#3730a3"),
+    "curated-black-myth": "https://cdn.akamai.steamstatic.com/steam/apps/2358720/header.jpg",
+    "curated-elden-ring-nightreign": "https://cdn.akamai.steamstatic.com/steam/apps/2622380/header.jpg",
+    "curated-split-fiction": "https://cdn.akamai.steamstatic.com/steam/apps/2001120/header.jpg",
+    "curated-steam-next-fest": demo_svg_image("Steam Next Fest"),
+}
+
+
+DEMO_RANK_OPPORTUNITIES = [
+    {
+        "id": "rank-monster-hunter-wilds",
+        "type": "game",
+        "source": "Steam热度榜",
+        "bucket": "rank",
+        "title": "Monster Hunter Wilds",
+        "summary": "大型动作共斗游戏适合做版本更新、玩家回流、装备流派和多人联机体验内容。",
+        "angle": "共斗游戏更新后，玩家最关心哪些变化？",
+        "image": "https://cdn.akamai.steamstatic.com/steam/apps/2246340/header.jpg",
+        "url": "https://store.steampowered.com/app/2246340/",
+        "heat": 87,
+        "trend": "+18%",
+        "tags": ["Steam热度", "共斗", "版本更新"],
+        "recommended_formats": ["30秒脚本", "B站解析", "小红书清单", "日报条目"],
+    },
+    {
+        "id": "rank-stellar-blade",
+        "type": "game",
+        "source": "Steam热度榜",
+        "bucket": "rank",
+        "title": "Stellar Blade",
+        "summary": "主机移植与PC玩家讨论度高，适合做配置表现、画面对比、入坑建议和海外评价整理。",
+        "angle": "主机游戏登陆PC后，内容团队应该先看什么？",
+        "image": "https://cdn.akamai.steamstatic.com/steam/apps/3489700/header.jpg",
+        "url": "https://store.steampowered.com/app/3489700/",
+        "heat": 86,
+        "trend": "+15%",
+        "tags": ["主机移植", "PC表现", "海外口碑"],
+        "recommended_formats": ["短视频切片", "购买建议", "海外资讯", "封面文案"],
+    },
+    {
+        "id": "rank-marvel-rivals",
+        "type": "game",
+        "source": "Steam热度榜",
+        "bucket": "rank",
+        "title": "Marvel Rivals",
+        "summary": "多人竞技游戏适合持续跟进赛季更新、角色强度、玩家情绪和社区争议。",
+        "angle": "竞技游戏赛季内容怎样拆成连续选题？",
+        "image": "https://cdn.akamai.steamstatic.com/steam/apps/2767030/header.jpg",
+        "url": "https://store.steampowered.com/app/2767030/",
+        "heat": 85,
+        "trend": "+11%",
+        "tags": ["赛季更新", "竞技", "玩家情绪"],
+        "recommended_formats": ["15秒短视频", "30秒脚本", "争议点分析", "日报"],
+    },
+    {
+        "id": "rank-silk-song",
+        "type": "game",
+        "source": "愿望单观察",
+        "bucket": "rank",
+        "title": "Hollow Knight: Silksong",
+        "summary": "高期待独立游戏适合做愿望单观察、发布节奏、玩家期待和同类游戏推荐。",
+        "angle": "高期待独立游戏为什么适合提前做内容池？",
+        "image": "https://cdn.akamai.steamstatic.com/steam/apps/1030300/header.jpg",
+        "url": "https://store.steampowered.com/app/1030300/",
+        "heat": 84,
+        "trend": "+9%",
+        "tags": ["独立游戏", "愿望单", "期待值"],
+        "recommended_formats": ["B站解析", "小红书笔记", "选题池", "日报"],
+    },
+    {
+        "id": "rank-hades-ii",
+        "type": "game",
+        "source": "Steam热度榜",
+        "bucket": "rank",
+        "title": "Hades II",
+        "summary": "高口碑续作适合做版本更新、流派推荐、玩家评价和同类动作Roguelike内容。",
+        "angle": "高口碑续作更新后，内容团队怎么判断是否值得跟进？",
+        "image": "https://cdn.akamai.steamstatic.com/steam/apps/1145350/header.jpg",
+        "url": "https://store.steampowered.com/app/1145350/",
+        "heat": 83,
+        "trend": "+8%",
+        "tags": ["Roguelike", "口碑", "版本更新"],
+        "recommended_formats": ["B站解析", "短视频脚本", "小红书清单", "日报"],
+    },
+    {
+        "id": "rank-dont-starve-together",
+        "type": "game",
+        "source": "Steam热度榜",
+        "bucket": "rank",
+        "title": "Don't Starve Together",
+        "summary": "长线运营游戏适合做促销节点、好友联机、入坑指南和老玩家回流内容。",
+        "angle": "长线联机游戏为什么适合反复做入坑内容？",
+        "image": "https://cdn.akamai.steamstatic.com/steam/apps/322330/header.jpg",
+        "url": "https://store.steampowered.com/app/322330/",
+        "heat": 81,
+        "trend": "+6%",
+        "tags": ["长线运营", "联机", "入坑指南"],
+        "recommended_formats": ["入坑建议", "30秒脚本", "促销提醒", "日报条目"],
+    },
+    {
+        "id": "rank-indie-radar",
+        "type": "news",
+        "source": "海外资讯",
+        "bucket": "rank",
+        "title": "独立游戏黑马监控",
+        "summary": "适合从Steam新品、试玩节和Reddit讨论中筛选潜力项目，形成每日选题池。",
+        "angle": "发行团队怎样更早发现可能爆的独立游戏？",
+        "image": demo_svg_image("Indie Radar", "#dcfce7", "#15803d"),
+        "url": "",
+        "heat": 80,
+        "trend": "+7%",
+        "tags": ["黑马预测", "试玩节", "选题池"],
+        "recommended_formats": ["日报条目", "B站清单", "短视频脚本", "市场观察"],
+    },
+]
+
+
+def normalize_demo_opportunities(opportunities, limit=18):
+    cleaned = [item for item in opportunities if item.get("id") not in EVENT_ONLY_OPPORTUNITY_IDS]
+    seen = {item.get("id") for item in cleaned}
+    for item in DEMO_RANK_OPPORTUNITIES:
+        if item["id"] not in seen:
+            cleaned.append(item.copy())
+            seen.add(item["id"])
+    for idx, item in enumerate(cleaned):
+        item.setdefault("trend", f"+{max(5, 26 - idx * 2)}%")
+        if not item.get("image"):
+            item["image"] = DEMO_IMAGE_BY_ID.get(item.get("id"), demo_svg_image("Game Radar"))
+    cleaned.sort(key=lambda item: item.get("heat", 0), reverse=True)
+    return cleaned[:limit]
+
+
 def is_demo_safe(title):
     low = (title or "").lower()
     return not any(term in low for term in DEMO_BLOCK_TERMS)
@@ -776,44 +926,55 @@ def build_script(title, angle, item=None, seconds=30, variant=0):
 
 
 def build_work_order_markdown(title, angle, item, profile, pack):
+    source_url = item.get("url")
     lines = [
-        f"# 内容执行工作单：{title}",
+        f"# {title} 剪辑交付工作单",
         "",
-        "## 1. 选题目标",
-        f"- 核心问题：{angle}",
+        "## 1. 今天为什么剪",
+        f"- 推荐角度：{angle}",
         f"- 目标受众：{profile['audience']}",
-        f"- 内容卖点：{profile['selling_point']}",
-        f"- 预计节省时间：约90-150分钟，减少人工找角度、写脚本、列素材和整理发布文案的时间。",
+        f"- 核心价值：{profile['selling_point']}",
+        "- 判断标准：能不能在30秒内讲清“为什么值得关注、适合谁、风险是什么”。",
         "",
-        "## 2. 推荐标题",
+        "## 2. 30秒成片结构",
+        "- 0-3秒：强问题开场，必须出现游戏名和核心判断。",
+        "- 3-8秒：放来源画面，证明不是空泛跟热点。",
+        "- 8-18秒：三段信息，分别讲亮点、玩家关注点、争议/风险。",
+        "- 18-25秒：给购买建议、入坑建议或内容判断。",
+        "- 25-30秒：评论区问题，引导用户选择下一条内容方向。",
+        "",
+        "## 3. 素材准备",
+        "- 01_key_visual：主视觉 / Steam页 / 官方图。",
+        "- 02_gameplay：实机或预告片高能片段3段。",
+        "- 03_social_proof：玩家评论、海外媒体标题、热度截图。",
+        "- 04_compare：同类游戏或平台标签对比素材。",
+        "- 05_cover：封面底图、标题短句、字幕关键词。",
+        "",
+        "## 4. 剪辑要求",
+        "- 画幅：9:16优先，兼容16:9二次裁切。",
+        "- 字幕：每屏不超过18个字，只保留关键词。",
+        "- 节奏：前10秒至少3次画面变化，避免纯口播。",
+        "- 封面：一版问题式，一版判断式，一版入坑/避坑式。",
+        "",
+        "## 5. 发布前核查",
+        "- 游戏名、平台、发售/活动时间是否准确。",
+        "- 素材是否来自官方或可引用来源。",
+        "- 标题是否过度承诺或容易引战。",
+        "- 评论截图是否遮挡个人隐私信息。",
+        "",
+        "## 6. 团队分工",
+        "- 剪辑：产出30秒短视频、字幕版和工程文件。",
+        "- 运营：选平台标题，安排发布时间。",
+        "- 素材：补齐来源链接和素材文件夹。",
+        "- 负责人：审核风险点，决定是否扩展成长视频。",
+        "",
+        "## 7. 可直接复制的首版标题",
         f"- B站：{pack['titles']['bilibili'][0]}",
         f"- 抖音：{pack['titles']['douyin'][0]}",
         f"- 小红书：{pack['titles']['xiaohongshu'][0]}",
-        "",
-        "## 3. 30秒分镜",
     ]
-    for shot in pack["shot_list"]:
-        lines.append(f"- {shot['time']}｜画面：{shot['screen']}｜口播：{shot['voice']}｜剪辑：{shot['edit']}")
-
-    lines.extend(["", "## 4. 素材清单"])
-    lines.extend(f"- {item}" for item in pack["asset_checklist"])
-
-    lines.extend(["", "## 5. 分工建议"])
-    for task in pack["owner_tasks"]:
-        lines.append(f"- {task['role']}：{task['task']}；产出：{task['output']}")
-
-    lines.extend(["", "## 6. 发布文案"])
-    lines.append(f"- 抖音：{pack['publish_copy']['douyin']}")
-    lines.append(f"- 小红书：{pack['publish_copy']['xiaohongshu']}")
-    lines.append(f"- B站简介：{pack['publish_copy']['bilibili_desc']}")
-
-    lines.extend(["", "## 7. 发布前核查"])
-    lines.extend(f"- {item}" for item in pack["risk_checklist"])
-
-    source_url = item.get("url")
     if source_url:
         lines.extend(["", "## 8. 来源", f"- {source_url}"])
-
     return "\n".join(lines)
 
 
@@ -1044,15 +1205,16 @@ async def get_content_opportunities(refresh=False):
 
     opportunities.sort(key=lambda x: x["heat"], reverse=True)
     opportunities = merge_curated_opportunities(opportunities, rotation=_content_refresh_count)
+    opportunities = normalize_demo_opportunities(opportunities)
     result = {
         "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "stats": {
             "opportunities": len(opportunities),
-            "short_video_topics": min(18, len(opportunities) * 2),
-            "news_items": len(news_items),
+            "short_video_topics": min(28, len(opportunities) * 2),
+            "news_items": len([o for o in opportunities if o.get("type") == "news"]),
             "risk_items": len([o for o in opportunities if o["heat"] >= 85]),
         },
-        "opportunities": opportunities[:18],
+        "opportunities": opportunities,
         "hero": opportunities[0] if opportunities else None,
         "refresh_id": _content_refresh_count,
     }

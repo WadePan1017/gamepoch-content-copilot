@@ -126,6 +126,24 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6" id="statsGrid"></div>
+                            <div class="grid gap-3 md:grid-cols-4 mt-4">
+                                <div class="task-card">
+                                    <div class="text-xs font-semibold text-sky-300 mb-2">视频剪辑</div>
+                                    <div>直接拿到30秒脚本、分镜节奏、封面文案和素材清单。</div>
+                                </div>
+                                <div class="task-card">
+                                    <div class="text-xs font-semibold text-sky-300 mb-2">活动内容</div>
+                                    <div>活动前生成必拍镜头、采访问题、B-roll和复盘方向。</div>
+                                </div>
+                                <div class="task-card">
+                                    <div class="text-xs font-semibold text-sky-300 mb-2">英语资讯</div>
+                                    <div>把海外消息整理成中文摘要、风险提醒和日报条目。</div>
+                                </div>
+                                <div class="task-card">
+                                    <div class="text-xs font-semibold text-sky-300 mb-2">负责人</div>
+                                    <div>快速判断今天优先做什么、谁负责、发布前查什么。</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="panel p-5">
                             <div class="flex items-center justify-between mb-4">
@@ -136,6 +154,7 @@
                         </div>
                     </div>
 
+                    <div id="demoPath" class="panel p-5"></div>
                     <div id="leaderBoard" class="panel p-5"></div>
                     <div id="heroCard" class="panel p-5"></div>
                 </section>
@@ -314,6 +333,7 @@ async function loadAll(force=false){
 
 function renderAll(){
     renderStats();
+    renderDemoPath();
     renderLeaderboard();
     renderHero();
     renderOpportunities();
@@ -322,6 +342,10 @@ function renderAll(){
     renderEventShell();
     renderCalendar();
     renderChart();
+}
+
+function itemPayload(item){
+    return JSON.stringify(item).replace(/'/g,"&#39;");
 }
 
 function renderStats(){
@@ -339,6 +363,35 @@ function renderStats(){
             <div class="mt-1 text-xs leading-5 text-slate-500">${esc(desc)}</div>
         </div>
     `).join('');
+}
+
+function renderDemoPath(){
+    const steps = [
+        ['1', '看今日热度榜', '先判断今天最值得跟进的游戏和内容线索。', 'opportunities'],
+        ['2', '生成内容包', '点击热点，直接生成标题、脚本、分镜和素材清单。', 'generator'],
+        ['3', '检查剪辑工作单', '确认镜头、字幕、封面、素材来源和发布风险。', 'generator'],
+        ['4', '准备活动内容', '进入活动规划，生成活动前/当天/活动后的清单。', 'events'],
+        ['5', '导出团队简报', '把今日热点和行动建议整理成可复制汇报。', 'daily'],
+    ];
+    $('demoPath').innerHTML = `
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+            <div>
+                <div class="chip mb-3"><i data-lucide="route" class="w-3.5 h-3.5"></i> 3分钟演示路径</div>
+                <h3 class="text-lg font-semibold tracking-tight text-white">不用解释技术，直接展示它怎么帮内容团队省时间</h3>
+                <p class="text-sm text-slate-500 mt-1">按这个顺序点，能快速看到从发现热点到产出工作单和简报的完整链路。</p>
+            </div>
+            <div class="chip">演示版：精选样例 + 模拟热度，正式版可接入实时数据源</div>
+        </div>
+        <div class="grid gap-3 md:grid-cols-5">
+            ${steps.map(([num, title, desc, target]) => `
+                <button class="task-card text-left hover:border-blue-300 hover:bg-[#f8fbff]" onclick="jumpTo('${target}')">
+                    <div class="text-xs font-semibold text-sky-300 mb-2">Step ${num}</div>
+                    <div class="font-semibold text-white">${title}</div>
+                    <div class="text-xs leading-5 text-slate-500 mt-2">${desc}</div>
+                </button>
+            `).join('')}
+        </div>
+    `;
 }
 
 function renderLeaderboard(){
@@ -370,7 +423,7 @@ function renderLeaderboard(){
                         const action = item.type === 'news' ? '整理海外摘要 / 做日报' : (index < 3 ? '今天先剪30秒短视频' : '加入选题池观察');
                         const trend = item.trend || (index < 3 ? '+24%' : index < 6 ? '+12%' : '+6%');
                         return `
-                            <tr class="border-b border-[#e2e8f0]/70 hover:bg-[#f8fbff] cursor-pointer" onclick='selectOpportunity(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+                            <tr class="border-b border-[#e2e8f0]/70 hover:bg-[#f8fbff] cursor-pointer" onclick='openContentPack(${itemPayload(item)})'>
                                 <td class="py-3 pr-3 font-semibold text-slate-400">#${index + 1}</td>
                                 <td class="py-3 px-3">
                                     <div class="flex items-center gap-3 min-w-[260px]">
@@ -428,7 +481,7 @@ function visibleOpportunities(){
 function renderOpportunities(){
     const list = visibleOpportunities();
     $('opportunityGrid').innerHTML = list.map(item => `
-        <button class="opportunity text-left p-3 ${state.selected?.id === item.id ? 'active' : ''}" onclick='selectOpportunity(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+        <article class="opportunity text-left p-3 cursor-pointer ${state.selected?.id === item.id ? 'active' : ''}" onclick='openContentPack(${itemPayload(item)})'>
             <div class="flex items-start gap-3">
                 <div class="w-16 h-12 rounded-md bg-[#f8fafc] border border-[#dbe3ef] overflow-hidden shrink-0">
                     ${item.image ? `<img src="${esc(item.image)}" class="w-full h-full object-cover" alt="">` : `<div class="media-placeholder">精选</div>`}
@@ -443,7 +496,11 @@ function renderOpportunities(){
             </div>
             <p class="mt-3 text-xs leading-5 text-slate-500 line-clamp-3">${esc(item.summary)}</p>
             <div class="mt-3 flex flex-wrap gap-1.5">${(item.tags || []).map(tag => `<span class="chip">${esc(tag)}</span>`).join('')}</div>
-        </button>
+            <div class="mt-3 flex gap-2">
+                <button class="btn btn-secondary flex-1" onclick='event.stopPropagation();selectOpportunity(${itemPayload(item)})'>看分析</button>
+                <button class="btn btn-primary flex-1" onclick='event.stopPropagation();openContentPack(${itemPayload(item)})'>生成内容包</button>
+            </div>
+        </article>
     `).join('') || `<div class="panel p-5 text-sm text-slate-500">暂无数据。</div>`;
     lucide.createIcons({attrs:{'stroke-width':1.5}});
 }
@@ -454,7 +511,12 @@ function selectOpportunity(item){
     renderHero();
     renderOpportunities();
     renderAnalysis();
-    generateFor(item);
+}
+
+async function openContentPack(item){
+    selectOpportunity(item);
+    await generateFor(item);
+    jumpTo('generator');
 }
 
 function renderAnalysis(){
@@ -578,7 +640,12 @@ function renderPack(){
 function renderWorkOrder(){
     const pack = state.pack;
     const value = pack?.value_summary || {};
-    const tasks = pack?.owner_tasks || [];
+    const tasks = [
+        {role:'剪辑', task:'按5段时间轴剪一条30秒竖版短视频，保留工程文件和字幕文件', output:'30秒成片 + 字幕版 + 工程文件'},
+        {role:'运营', task:'从标题池选择B站/抖音/小红书标题，并安排发布时间和评论区问题', output:'平台标题 + 发布文案'},
+        {role:'素材', task:'按01-05文件夹补齐主视觉、实机、评论、来源链接和封面底图', output:'素材包 + 来源表'},
+        {role:'负责人', task:'审核事实、版权、标题尺度和是否扩展成长视频', output:'发布确认 + 后续选题判断'}
+    ];
     $('workOrderPanel').innerHTML = `
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>

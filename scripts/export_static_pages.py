@@ -41,7 +41,6 @@ async def collect_data():
         "影之刃零 Phantom Blade Zero",
         "黑神话：悟空",
         "艾尔登法环：黑夜君临",
-        "Gamescom 展会跟拍",
         "Steam Next Fest 试玩节",
     ]:
         topic_examples[topic] = await build_topic_opportunity(topic)
@@ -76,7 +75,6 @@ def enhance_opportunities(data):
         "curated-elden-ring-nightreign": "https://cdn.akamai.steamstatic.com/steam/apps/2622380/header.jpg",
         "curated-split-fiction": "https://cdn.akamai.steamstatic.com/steam/apps/2001120/header.jpg",
         "curated-steam-next-fest": svg_image("Steam Next Fest"),
-        "curated-gamescom": svg_image("Gamescom", "#dbeafe", "#1d4ed8"),
     }
     extra = [
         {
@@ -140,19 +138,34 @@ def enhance_opportunities(data):
             "recommended_formats": ["B站解析", "小红书笔记", "选题池", "日报"],
         },
         {
-            "id": "rank-tga-watch",
-            "type": "news",
-            "source": "活动雷达",
+            "id": "rank-hades-ii",
+            "type": "game",
+            "source": "Steam热度榜",
             "bucket": "rank",
-            "title": "TGA 年度游戏内容储备",
-            "summary": "适合提前建立提名、获奖预测、预告片速递和海外讨论整理模板。",
-            "angle": "大型发布活动前，内容团队要提前准备哪些模板？",
-            "image": svg_image("TGA Watch", "#fef3c7", "#b45309"),
-            "url": "",
-            "heat": 82,
+            "title": "Hades II",
+            "summary": "高口碑续作适合做版本更新、流派推荐、玩家评价和同类动作Roguelike内容。",
+            "angle": "高口碑续作更新后，内容团队怎么判断是否值得跟进？",
+            "image": "https://cdn.akamai.steamstatic.com/steam/apps/1145350/header.jpg",
+            "url": "https://store.steampowered.com/app/1145350/",
+            "heat": 83,
             "trend": "+8%",
-            "tags": ["活动规划", "海外资讯", "预告片"],
-            "recommended_formats": ["活动前准备", "直播速报", "公众号复盘", "内部汇报"],
+            "tags": ["Roguelike", "口碑", "版本更新"],
+            "recommended_formats": ["B站解析", "短视频脚本", "小红书清单", "日报"],
+        },
+        {
+            "id": "rank-dont-starve-together",
+            "type": "game",
+            "source": "Steam热度榜",
+            "bucket": "rank",
+            "title": "Don't Starve Together",
+            "summary": "长线运营游戏适合做促销节点、好友联机、入坑指南和老玩家回流内容。",
+            "angle": "长线联机游戏为什么适合反复做入坑内容？",
+            "image": "https://cdn.akamai.steamstatic.com/steam/apps/322330/header.jpg",
+            "url": "https://store.steampowered.com/app/322330/",
+            "heat": 81,
+            "trend": "+6%",
+            "tags": ["长线运营", "联机", "入坑指南"],
+            "recommended_formats": ["入坑建议", "30秒脚本", "促销提醒", "日报条目"],
         },
         {
             "id": "rank-indie-radar",
@@ -171,7 +184,8 @@ def enhance_opportunities(data):
         },
     ]
 
-    opportunities = data.get("opportunities", [])
+    event_only_ids = {"curated-gamescom", "rank-tga-watch"}
+    opportunities = [item for item in data.get("opportunities", []) if item.get("id") not in event_only_ids]
     seen = {item.get("id") for item in opportunities}
     for idx, item in enumerate(opportunities):
         item.setdefault("trend", f"+{max(5, 26 - idx * 2)}%")
@@ -181,10 +195,11 @@ def enhance_opportunities(data):
         if item["id"] not in seen:
             opportunities.append(item)
     opportunities.sort(key=lambda item: item.get("heat", 0), reverse=True)
-    data["opportunities"] = opportunities[:14]
+    data["opportunities"] = opportunities[:12]
     data["hero"] = data["opportunities"][0] if data["opportunities"] else data.get("hero")
     data["stats"]["opportunities"] = len(data["opportunities"])
     data["stats"]["short_video_topics"] = min(28, len(data["opportunities"]) * 2)
+    data["stats"]["news_items"] = len([item for item in data["opportunities"] if item.get("type") == "news"])
     data["stats"]["risk_items"] = len([item for item in data["opportunities"] if item.get("heat", 0) >= 85])
 
 
@@ -280,6 +295,48 @@ window.__GAMEPOCH_STATIC_DATA__ = {js_string(data)};
             tags: ['手动选题','内容生成','快速拆解'],
             recommended_formats: ['B站解析','30秒脚本','小红书笔记','团队简报']
         }};
+    }}
+
+    function buildDeliveryWorkOrder(title, angle, profile){{
+        return `# ${{title}} 剪辑交付工作单
+
+## 1. 今天为什么剪
+- 推荐角度：${{angle}}
+- 目标受众：${{profile.audience}}
+- 核心价值：${{profile.selling}}
+- 判断标准：能不能在30秒内讲清“为什么值得关注、适合谁、风险是什么”。
+
+## 2. 30秒成片结构
+- 0-3秒：强问题开场，必须出现游戏名和核心判断。
+- 3-8秒：放来源画面，证明不是空泛跟热点。
+- 8-18秒：三段信息，分别讲亮点、玩家关注点、争议/风险。
+- 18-25秒：给购买建议、入坑建议或内容判断。
+- 25-30秒：评论区问题，引导用户选择下一条内容方向。
+
+## 3. 素材准备
+- 01_key_visual：主视觉 / Steam页 / 官方图。
+- 02_gameplay：实机或预告片高能片段3段。
+- 03_social_proof：玩家评论、海外媒体标题、热度截图。
+- 04_compare：同类游戏或平台标签对比素材。
+- 05_cover：封面底图、标题短句、字幕关键词。
+
+## 4. 剪辑要求
+- 画幅：9:16优先，兼容16:9二次裁切。
+- 字幕：每屏不超过18个字，只保留关键词。
+- 节奏：前10秒至少3次画面变化，避免纯口播。
+- 封面：一版问题式，一版判断式，一版入坑/避坑式。
+
+## 5. 发布前核查
+- 游戏名、平台、发售/活动时间是否准确。
+- 素材是否来自官方或可引用来源。
+- 标题是否过度承诺或容易引战。
+- 评论截图是否遮挡个人隐私信息。
+
+## 6. 团队分工
+- 剪辑：产出30秒短视频、字幕版和工程文件。
+- 运营：选平台标题，安排发布时间。
+- 素材：补齐来源链接和素材文件夹。
+- 负责人：审核风险点，决定是否扩展成长视频。`;
     }}
 
     function buildPack(item){{
@@ -382,7 +439,7 @@ window.__GAMEPOCH_STATIC_DATA__ = {js_string(data)};
                 team_value:'把选题、脚本、素材和分工合成一张可执行工作单，减少内容团队反复沟通。',
                 best_use:'适合晨会选题和活动前准备'
             }},
-            work_order_markdown: workOrder
+            work_order_markdown: buildDeliveryWorkOrder(title, angle, profile)
         }};
     }}
 
