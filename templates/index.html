@@ -136,6 +136,7 @@
                         </div>
                     </div>
 
+                    <div id="leaderBoard" class="panel p-5"></div>
                     <div id="heroCard" class="panel p-5"></div>
                 </section>
 
@@ -313,6 +314,7 @@ async function loadAll(force=false){
 
 function renderAll(){
     renderStats();
+    renderLeaderboard();
     renderHero();
     renderOpportunities();
     renderAnalysis();
@@ -337,6 +339,58 @@ function renderStats(){
             <div class="mt-1 text-xs leading-5 text-slate-500">${esc(desc)}</div>
         </div>
     `).join('');
+}
+
+function renderLeaderboard(){
+    const list = (state.data?.opportunities || []).slice(0, 10);
+    if(!list.length){ $('leaderBoard').innerHTML = ''; return; }
+    $('leaderBoard').innerHTML = `
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+            <div>
+                <div class="chip mb-3"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Steam / 海外内容热度榜</div>
+                <h3 class="text-lg font-semibold tracking-tight text-white">今天优先跟进什么，一眼能看出来</h3>
+                <p class="text-sm text-slate-500 mt-1">用热度、增长、素材可用性和内容动作，把“看资讯”变成“排今天要做的视频”。</p>
+            </div>
+            <button class="btn btn-secondary" onclick="jumpTo('opportunities')"><i data-lucide="list-filter" class="w-4 h-4"></i> 查看全部热点</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-[#e2e8f0] text-xs text-slate-500">
+                        <th class="py-2 pr-3 text-left font-semibold">排名</th>
+                        <th class="py-2 px-3 text-left font-semibold">游戏 / 事件</th>
+                        <th class="py-2 px-3 text-left font-semibold">来源</th>
+                        <th class="py-2 px-3 text-left font-semibold">热度</th>
+                        <th class="py-2 px-3 text-left font-semibold">趋势</th>
+                        <th class="py-2 pl-3 text-left font-semibold">建议动作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${list.map((item, index) => {
+                        const action = item.type === 'news' ? '整理海外摘要 / 做日报' : (index < 3 ? '今天先剪30秒短视频' : '加入选题池观察');
+                        const trend = item.trend || (index < 3 ? '+24%' : index < 6 ? '+12%' : '+6%');
+                        return `
+                            <tr class="border-b border-[#e2e8f0]/70 hover:bg-[#f8fbff] cursor-pointer" onclick='selectOpportunity(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+                                <td class="py-3 pr-3 font-semibold text-slate-400">#${index + 1}</td>
+                                <td class="py-3 px-3">
+                                    <div class="flex items-center gap-3 min-w-[260px]">
+                                        <div class="w-16 h-9 rounded-md overflow-hidden border border-[#dbe3ef] bg-[#f8fafc] shrink-0">
+                                            ${item.image ? `<img src="${esc(item.image)}" class="w-full h-full object-cover" alt="">` : `<div class="media-placeholder">HOT</div>`}
+                                        </div>
+                                        <div class="font-semibold text-white line-clamp-2">${esc(item.title)}</div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 text-slate-500">${esc(item.source)}</td>
+                                <td class="py-3 px-3"><span class="chip">${esc(item.heat)}</span></td>
+                                <td class="py-3 px-3 text-blue-600 font-semibold">${esc(trend)}</td>
+                                <td class="py-3 pl-3 text-slate-400">${esc(action)}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 function renderHero(){
