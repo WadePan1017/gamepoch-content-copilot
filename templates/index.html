@@ -340,7 +340,9 @@ async function loadAll(force=false){
         state.generationVariant = force ? state.generationVariant + 1 : state.generationVariant;
         state.selectedEventId = events.events?.[0]?.id || null;
         state.selected = ops.hero || ops.opportunities[0];
-        $('syncTime').textContent = `更新：${ops.time} · R${ops.refresh_id || 0}`;
+        const liveCount = ops.source_status?.live_items || 0;
+        const newsCount = ops.source_status?.news_items_raw || 0;
+        $('syncTime').textContent = `更新：${ops.time} · R${ops.refresh_id || 0} · 实时${liveCount}条 / 资讯${newsCount}条`;
         renderAll();
         if(state.selectedEventId) await loadEventDetail(state.selectedEventId, false);
         if(state.selected) await generateFor(state.selected);

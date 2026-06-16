@@ -769,7 +769,20 @@ def normalize_demo_opportunities(opportunities, limit=18):
         item.setdefault("trend", f"+{max(5, 26 - idx * 2)}%")
         if not item.get("image"):
             item["image"] = DEMO_IMAGE_BY_ID.get(item.get("id"), demo_svg_image("Game Radar"))
-    cleaned.sort(key=lambda item: item.get("heat", 0), reverse=True)
+    live_sources = {"Steam", "IGN", "GameSpot", "PCGamer", "Kotaku"}
+
+    def rank_key(item):
+        source = item.get("source", "")
+        bucket = item.get("bucket", "")
+        if source in live_sources or bucket in {"top_sellers", "new_releases", "specials", "news"}:
+            group = 0
+        elif item.get("id", "").startswith("curated-"):
+            group = 1
+        else:
+            group = 2
+        return (group, -item.get("heat", 0), item.get("title", ""))
+
+    cleaned.sort(key=rank_key)
     return cleaned[:limit]
 
 
@@ -1222,6 +1235,7 @@ async def get_content_opportunities(refresh=False):
     if refresh:
         _content_refresh_count += 1
         _cache.pop("content_ops", None)
+        _cache.pop("dash", None)
     cached_data = cached("content_ops")
     if cached_data:
         return cached_data
@@ -1254,6 +1268,7 @@ async def get_content_opportunities(refresh=False):
             continue
         opportunities.append(opportunity_from_news(item, rank))
 
+    live_count = len(opportunities)
     opportunities.sort(key=lambda x: x["heat"], reverse=True)
     opportunities = merge_curated_opportunities(opportunities, rotation=_content_refresh_count)
     opportunities = normalize_demo_opportunities(opportunities)
@@ -1268,6 +1283,12 @@ async def get_content_opportunities(refresh=False):
         "opportunities": opportunities,
         "hero": opportunities[0] if opportunities else None,
         "refresh_id": _content_refresh_count,
+        "source_status": {
+            "live_items": live_count,
+            "steam_items": sum(len(dash.get(bucket, [])) for bucket in ["top_sellers", "new_releases", "specials"]),
+            "news_items_raw": len(news_items),
+            "fallback_items": len([item for item in opportunities if item.get("id", "").startswith(("curated-", "rank-"))]),
+        },
     }
     cache_set("content_ops", result)
     return result
