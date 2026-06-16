@@ -705,10 +705,15 @@ function renderPack(){
         ['xiaohongshu','小红书'],
         ['wechat','公众号']
     ];
+    const isAI = pack.generation_source === 'ai';
+    const sourceLabel = isAI ? '<span class="chip" style="background:#0f172a;color:#22d3ee;border-color:#0f172a">AI生成</span>' : '<span class="chip">模板生成</span>';
     renderWorkOrder();
     $('titlesPanel').innerHTML = `
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-semibold text-white">平台标题</h3>
+            <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-white">平台标题</h3>
+                ${sourceLabel}
+            </div>
             <div class="flex gap-2">
                 <button class="btn btn-ghost" onclick="regeneratePack()"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成</button>
                 <button class="btn btn-ghost" onclick="copyText('titles')"><i data-lucide="copy" class="w-4 h-4"></i> 复制</button>

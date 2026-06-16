@@ -142,7 +142,35 @@ http://localhost:8000/api/demo/status
 - 后端：FastAPI + httpx
 - 前端：Tailwind CSS + Chart.js + Lucide icons
 - 数据源：Steam Store API、Steam Reviews、IGN RSS、GameSpot RSS、PC Gamer RSS
+- AI生成：DeepSeek API（可选，未配置时使用模板生成）
 - 报告导出：Markdown、Word，保留原游戏舆情 Word 报告接口能力
+
+## AI内容生成（可选）
+
+支持接入 DeepSeek API 生成真实、多样的内容。未配置时自动使用模板生成。
+
+### 启用方式
+
+1. 注册 [DeepSeek Platform](https://platform.deepseek.com/) 获取 API Key
+2. 设置环境变量：
+   ```bash
+   # Windows PowerShell
+   $env:DEEPSEEK_API_KEY="your-api-key-here"
+
+   # 或创建 .env 文件
+   DEEPSEEK_API_KEY=your-api-key-here
+   ```
+3. 重启服务，生成内容时会自动调用 AI
+
+### 验证
+
+访问 `/api/ai/status` 检查 AI 是否可用：
+```json
+{
+  "available": true,
+  "model": "deepseek-chat"
+}
+```
 
 ## Demo 定位
 

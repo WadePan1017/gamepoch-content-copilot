@@ -9,3 +9,5 @@ services:
     envVars:
       - key: TZ
         value: Asia/Shanghai
+      - key: DEEPSEEK_API_KEY
+        sync: false

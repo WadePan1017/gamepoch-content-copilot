@@ -19,7 +19,11 @@
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `python app.py`
    - Health Check Path: `/api/demo/status`
-5. 部署完成后打开服务 URL。
+5. （可选）配置 DeepSeek API Key：
+   - 在 Render 面板的 Environment 中添加 `DEEPSEEK_API_KEY`
+   - 值为你的 DeepSeek API Key（从 https://platform.deepseek.com 获取）
+   - 不配置则使用模板生成，功能完全可用
+6. 部署完成后打开服务 URL。
 
 默认预计 URL：
 

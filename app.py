@@ -6,10 +6,13 @@ import asyncio
 import json
 import os
 import re
+import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
 from io import BytesIO
 from urllib.parse import urlparse
+
+warnings.filterwarnings("ignore", message=".*XMLParsedAsHTML.*")
 
 import httpx
 from bs4 import BeautifulSoup
@@ -162,7 +165,7 @@ async def fetch_news(url, source, max_items=20):
         r = await c.get(url, headers={"User-Agent": "Mozilla/5.0"})
         if r.status_code != 200:
             return []
-        soup = BeautifulSoup(r.text, "xml")
+        soup = BeautifulSoup(r.text, "html.parser")
         items = []
         for item in soup.find_all("item")[:max_items]:
             title = item.find("title")
@@ -201,6 +204,7 @@ async def get_gamespot():
 
 _cache = {}
 _content_refresh_count = 0
+_CACHE_MAX_SIZE = 15
 
 def cached(key, fn=None, ttl=600):
     now = datetime.now().timestamp()
@@ -210,6 +214,10 @@ def cached(key, fn=None, ttl=600):
 
 
 def cache_set(key, data):
+    # 缓存满时淘汰最旧的
+    if len(_cache) >= _CACHE_MAX_SIZE:
+        oldest_key = min(_cache, key=lambda k: _cache[k]["t"])
+        _cache.pop(oldest_key, None)
     _cache[key] = {"d": data, "t": datetime.now().timestamp()}
 
 
@@ -925,6 +933,153 @@ def variant_pick(options, variant=0):
     return options[variant % len(options)]
 
 
+# ============================================================
+# DeepSeek AI 内容生成
+# ============================================================
+
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_BASE_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_MODEL = "deepseek-chat"
+
+AI_GENERATION_PROMPT = """你是一个游戏发行团队的内容策划专家。根据以下游戏信息，生成完整的内容包。
+
+游戏名称：{title}
+内容角度：{angle}
+来源：{source}
+标签：{tags}
+简介：{summary}
+
+要求：
+1. 标题要吸引人，适合各平台风格（B站偏深度、抖音偏钩子、小红书种草、公众号偏行业观察）
+2. 脚本要有节奏感，每段标注时间和画面建议
+3. 分镜要具体，包含口播文案和剪辑指导
+4. 采访问题要有深度，能引出有价值的回答
+
+请严格按以下JSON格式返回，不要加markdown代码块标记，直接返回JSON：
+{{
+  "titles": {{"bilibili": ["标题1", "标题2", "标题3"], "douyin": ["标题1", "标题2", "标题3"], "xiaohongshu": ["标题1", "标题2", "标题3"], "wechat": ["标题1", "标题2", "标题3"]}},
+  "scripts": {{"15s": "15秒脚本内容", "30s": "30秒脚本内容", "60s": "60秒脚本内容"}},
+  "cover_copy": ["封面文案1", "封面文案2", "封面文案3"],
+  "publish_copy": {{"douyin": "抖音发布文案", "xiaohongshu": "小红书发布文案", "bilibili_desc": "B站简介"}},
+  "interview": ["采访问题1", "采访问题2", "采访问题3", "采访问题4"],
+  "analysis": {{"why_hot": "为什么值得做", "player_focus": ["关注点1", "关注点2", "关注点3", "关注点4"], "content_opportunity": "内容机会分析", "risk": "风险提示"}},
+  "shot_list": [{{"time": "0-3秒", "screen": "画面描述", "voice": "口播内容", "edit": "剪辑指导"}}, {{"time": "3-8秒", "screen": "画面描述", "voice": "口播内容", "edit": "剪辑指导"}}, {{"time": "8-18秒", "screen": "画面描述", "voice": "口播内容", "edit": "剪辑指导"}}, {{"time": "18-25秒", "screen": "画面描述", "voice": "口播内容", "edit": "剪辑指导"}}, {{"time": "25-30秒", "screen": "画面描述", "voice": "口播内容", "edit": "剪辑指导"}}],
+  "editing_notes": ["剪辑注意1", "剪辑注意2", "剪辑注意3", "剪辑注意4"],
+  "risk_checklist": ["风险检查1", "风险检查2", "风险检查3", "风险检查4"]
+}}"""
+
+
+async def call_deepseek(prompt: str) -> dict | None:
+    """调用DeepSeek API，返回解析后的JSON，失败返回None"""
+    if not DEEPSEEK_API_KEY:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=20) as c:
+            r = await c.post(
+                DEEPSEEK_BASE_URL,
+                headers={
+                    "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": DEEPSEEK_MODEL,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.8,
+                    "max_tokens": 4000,
+                },
+            )
+            if r.status_code != 200:
+                print(f"DeepSeek API error: {r.status_code} {r.text[:200]}")
+                return None
+            data = r.json()
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if not content:
+                return None
+            # 清理可能的markdown代码块标记
+            content = content.strip()
+            if content.startswith("```"):
+                content = re.sub(r"^```(?:json)?\s*", "", content)
+                content = re.sub(r"\s*```$", "", content)
+            return json.loads(content)
+    except Exception as e:
+        print(f"DeepSeek call failed: {e}")
+        return None
+
+
+async def build_content_pack_ai(item: dict) -> dict:
+    """AI版本的内容包生成，先尝试DeepSeek，失败回退模板"""
+    title = item.get("title", "今日热点")
+    angle = item.get("angle", "为什么值得关注")
+    source = item.get("source", "内容源")
+    tags = ", ".join(item.get("tags", [])[:3])
+    summary = item.get("summary", "")
+
+    # 尝试AI生成
+    prompt = AI_GENERATION_PROMPT.format(
+        title=title, angle=angle, source=source, tags=tags, summary=summary
+    )
+    ai_result = await call_deepseek(prompt)
+
+    # 无论AI是否成功，都用模板生成基础包
+    template_pack = build_content_pack(item)
+
+    if ai_result:
+        # AI成功，合并结果
+        template_pack["generation_source"] = "ai"
+
+        # 合并AI生成的字段，缺失的保留模板
+        if "titles" in ai_result:
+            for platform in ["bilibili", "douyin", "xiaohongshu", "wechat"]:
+                if platform in ai_result["titles"] and isinstance(ai_result["titles"][platform], list):
+                    template_pack["titles"][platform] = ai_result["titles"][platform][:3]
+
+        if "scripts" in ai_result:
+            for key in ["15s", "30s", "60s"]:
+                if key in ai_result["scripts"] and ai_result["scripts"][key]:
+                    template_pack["scripts"][key] = ai_result["scripts"][key]
+
+        if "cover_copy" in ai_result and isinstance(ai_result["cover_copy"], list):
+            template_pack["cover_copy"] = ai_result["cover_copy"][:3]
+
+        if "publish_copy" in ai_result:
+            for key in ["douyin", "xiaohongshu", "bilibili_desc"]:
+                if key in ai_result["publish_copy"] and ai_result["publish_copy"][key]:
+                    template_pack["publish_copy"][key] = ai_result["publish_copy"][key]
+
+        if "interview" in ai_result and isinstance(ai_result["interview"], list):
+            template_pack["interview"] = ai_result["interview"][:4]
+
+        if "analysis" in ai_result:
+            ai_analysis = ai_result["analysis"]
+            if "why_hot" in ai_analysis and ai_analysis["why_hot"]:
+                template_pack["analysis"]["why_hot"] = ai_analysis["why_hot"]
+            if "player_focus" in ai_analysis and isinstance(ai_analysis["player_focus"], list):
+                template_pack["analysis"]["player_focus"] = ai_analysis["player_focus"][:4]
+            if "content_opportunity" in ai_analysis and ai_analysis["content_opportunity"]:
+                template_pack["analysis"]["content_opportunity"] = ai_analysis["content_opportunity"]
+            if "risk" in ai_analysis and ai_analysis["risk"]:
+                template_pack["analysis"]["risk"] = ai_analysis["risk"]
+
+        if "shot_list" in ai_result and isinstance(ai_result["shot_list"], list):
+            template_pack["shot_list"] = ai_result["shot_list"][:5]
+
+        if "editing_notes" in ai_result and isinstance(ai_result["editing_notes"], list):
+            template_pack["editing_notes"] = ai_result["editing_notes"][:4]
+
+        if "risk_checklist" in ai_result and isinstance(ai_result["risk_checklist"], list):
+            template_pack["risk_checklist"] = ai_result["risk_checklist"][:4]
+
+        # 用AI结果重新生成工作单
+        profile = content_profile(item)
+        template_pack["work_order_markdown"] = build_work_order_markdown(
+            title, angle, item, profile, template_pack
+        )
+    else:
+        template_pack["generation_source"] = "template"
+
+    return template_pack
+
+
 def build_titles(title, angle, item=None, variant=0):
     clean = re.sub(r"\s+", " ", title).strip()
     profile = content_profile(item or {"title": title, "angle": angle})
@@ -1302,7 +1457,16 @@ async def api_content_opportunities(refresh: int = 0):
 @app.post("/api/content/generate")
 async def api_content_generate(request: Request):
     item = await request.json()
-    return build_content_pack(item)
+    return await build_content_pack_ai(item)
+
+
+@app.get("/api/ai/status")
+async def api_ai_status():
+    """返回AI生成是否可用"""
+    return {
+        "available": bool(DEEPSEEK_API_KEY),
+        "model": DEEPSEEK_MODEL if DEEPSEEK_API_KEY else None,
+    }
 
 
 @app.get("/api/content/topic")
