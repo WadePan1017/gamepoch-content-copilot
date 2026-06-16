@@ -1002,7 +1002,9 @@ async def call_deepseek(prompt: str) -> dict | None:
                 content = re.sub(r"\s*```$", "", content)
             return json.loads(content)
     except Exception as e:
-        print(f"DeepSeek call failed: {e}")
+        print(f"DeepSeek call failed: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
