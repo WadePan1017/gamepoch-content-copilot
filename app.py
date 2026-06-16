@@ -974,7 +974,7 @@ async def call_deepseek(prompt: str) -> dict | None:
     if not DEEPSEEK_API_KEY:
         return None
     try:
-        async with httpx.AsyncClient(timeout=20) as c:
+        async with httpx.AsyncClient(timeout=60) as c:
             r = await c.post(
                 DEEPSEEK_BASE_URL,
                 headers={
@@ -985,7 +985,7 @@ async def call_deepseek(prompt: str) -> dict | None:
                     "model": DEEPSEEK_MODEL,
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.8,
-                    "max_tokens": 4000,
+                    "max_tokens": 2000,
                 },
             )
             if r.status_code != 200:
