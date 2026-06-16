@@ -149,6 +149,7 @@
                         <!-- 数据概览 -->
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6" id="statsGrid"></div>
                         <div id="sourceStatusCard" class="mt-4"></div>
+                        <div id="quickGenerateCard" class="mt-4"></div>
                     </div>
 
                     <!-- 快速体验 -->
@@ -294,7 +295,7 @@ function safeImageSrc(src){
 function imageTag(src, className='w-full h-full object-cover', alt=''){
     const safeSrc = safeImageSrc(src);
     if(!safeSrc) return `<div class="media-placeholder">精选</div>`;
-    return `<img src="${esc(safeSrc)}" class="${esc(className)}" alt="${esc(alt)}" loading="eager" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${IMAGE_FALLBACK}'">`;
+    return `<img src="${esc(safeSrc)}" class="${esc(className)}" alt="${esc(alt)}" loading="eager" referrerpolicy="no-referrer" onerror="this.onerror=null;this.outerHTML='<div class=&quot;media-placeholder&quot;>精选</div>'">`;
 }
 
 function setActiveNav(id){
@@ -367,12 +368,14 @@ function renderAll(){
 }
 
 function renderSourceStatus(){
+    const el = $('sourceStatusCard');
+    if(!el) return;
     const status = state.data?.source_status || {};
     const live = status.live_items || 0;
     const steam = status.steam_items || 0;
     const news = status.news_items_raw || 0;
     const fallback = status.fallback_items || 0;
-    $('sourceStatusCard').innerHTML = `
+    el.innerHTML = `
         <div class="panel-soft p-4">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <div>
@@ -387,7 +390,9 @@ function renderSourceStatus(){
 }
 
 function renderQuickGenerate(){
-    $('quickGenerateCard').innerHTML = `
+    const el = $('quickGenerateCard');
+    if(!el) return;
+    el.innerHTML = `
         <div class="panel-soft p-4">
             <div class="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
                 <div>
@@ -425,7 +430,11 @@ function renderLiveDemoBanner(){
 }
 
 function itemPayload(item){
-    return JSON.stringify(item).replace(/'/g,"&#39;");
+    return JSON.stringify(item)
+        .replace(/&/g, '&amp;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 function renderStats(){
@@ -1133,6 +1142,7 @@ function renderChart(){
     const steam = ops.filter(x => x.type === 'game').length;
     const news = ops.filter(x => x.type === 'news').length;
     const ctx = $('mixChart');
+    if(!ctx) return;
     if(state.chart) state.chart.destroy();
     state.chart = new Chart(ctx, {
         type:'doughnut',
