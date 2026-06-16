@@ -9,11 +9,12 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from io import BytesIO
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -27,6 +28,12 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 # ============================================================
 
 STEAM = "https://store.steampowered.com/api"
+ALLOWED_IMAGE_HOST_SUFFIXES = (
+    "steamstatic.com",
+    "akamaihd.net",
+    "akamai.steamstatic.com",
+    "cloudflare.steamstatic.com",
+)
 
 def clean_item(item):
     """清洗Steam API返回的游戏数据"""
@@ -286,6 +293,50 @@ async def api_game(app_id: int):
 @app.get("/api/reviews/{app_id}")
 async def api_reviews(app_id: int, num: int = 20):
     return await game_reviews(app_id, num)
+
+
+def is_allowed_image_url(raw_url):
+    try:
+        parsed = urlparse(raw_url)
+    except Exception:
+        return False
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme not in {"http", "https"} or not host:
+        return False
+    return any(host == suffix or host.endswith(f".{suffix}") for suffix in ALLOWED_IMAGE_HOST_SUFFIXES)
+
+
+@app.get("/api/image-proxy")
+async def api_image_proxy(url: str):
+    if not is_allowed_image_url(url):
+        return Response("image host not allowed", status_code=400)
+
+    try:
+        async with httpx.AsyncClient(timeout=12, follow_redirects=True) as c:
+            r = await c.get(url, headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            })
+    except Exception:
+        return Response("image fetch failed", status_code=502)
+
+    final_url = str(r.url)
+    if not is_allowed_image_url(final_url):
+        return Response("redirect host not allowed", status_code=400)
+    if r.status_code != 200:
+        return Response("image fetch failed", status_code=502)
+
+    content_type = r.headers.get("content-type", "image/jpeg").split(";")[0].strip().lower()
+    if not content_type.startswith("image/"):
+        return Response("not an image", status_code=415)
+    if len(r.content) > 5 * 1024 * 1024:
+        return Response("image too large", status_code=413)
+
+    return Response(
+        content=r.content,
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.get("/api/translate")

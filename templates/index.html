@@ -107,6 +107,7 @@
             </header>
 
             <div class="px-4 sm:px-6 py-6 max-w-7xl mx-auto space-y-8">
+                <div id="liveDemoBanner" class="hidden"></div>
                 <section id="dashboard" class="space-y-5">
                     <div class="grid gap-4 xl:grid-cols-[1.3fr_.7fr]">
                         <div class="panel p-5 sm:p-6">
@@ -279,6 +280,27 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const RENDER_DEMO_URL = 'https://gamepoch-content-copilot.onrender.com';
+const IMAGE_FALLBACK = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 360'%3E%3Crect width='640' height='360' fill='%23e0f2fe'/%3E%3Ccircle cx='560' cy='80' r='140' fill='rgba(255,255,255,.45)'/%3E%3Ccircle cx='80' cy='320' r='180' fill='rgba(255,255,255,.35)'/%3E%3Ctext x='48' y='182' font-size='44' font-weight='700' font-family='Arial,sans-serif' fill='%232563eb'%3EGamePoch%3C/text%3E%3Ctext x='50' y='228' font-size='20' font-family='Arial,sans-serif' fill='%232563eb' opacity='.72'%3EContent Opportunity%3C/text%3E%3C/svg%3E";
+
+function isDynamicBackend(){
+    return ['localhost','127.0.0.1'].includes(location.hostname) || location.hostname.endsWith('.onrender.com');
+}
+
+function safeImageSrc(src){
+    if(!src) return '';
+    if(src.startsWith('data:')) return src;
+    if(isDynamicBackend() && /steamstatic\.com|akamaihd\.net/i.test(src)){
+        return `/api/image-proxy?url=${encodeURIComponent(src)}`;
+    }
+    return src;
+}
+
+function imageTag(src, className='w-full h-full object-cover', alt=''){
+    const safeSrc = safeImageSrc(src);
+    if(!safeSrc) return `<div class="media-placeholder">精选</div>`;
+    return `<img src="${esc(safeSrc)}" class="${esc(className)}" alt="${esc(alt)}" loading="eager" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${IMAGE_FALLBACK}'">`;
+}
 
 function setActiveNav(id){
     document.querySelectorAll('.nav-item').forEach(btn => btn.classList.toggle('active', btn.dataset.jump === id));
@@ -332,6 +354,7 @@ async function loadAll(force=false){
 }
 
 function renderAll(){
+    renderLiveDemoBanner();
     renderStats();
     renderDemoPath();
     renderLeaderboard();
@@ -342,6 +365,29 @@ function renderAll(){
     renderEventShell();
     renderCalendar();
     renderChart();
+}
+
+function renderLiveDemoBanner(){
+    const box = $('liveDemoBanner');
+    if(!box) return;
+    if(!location.hostname.includes('github.io')){
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+    }
+    box.classList.remove('hidden');
+    box.innerHTML = `
+        <div class="panel p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-blue-200 bg-[#f8fbff]">
+            <div>
+                <div class="chip mb-2"><i data-lucide="radio-tower" class="w-3.5 h-3.5"></i> 实时后端 Demo</div>
+                <h2 class="text-lg font-semibold tracking-tight text-white">当前是静态备用页；实时抓取、搜索和 Word 导出请打开 Render 在线版。</h2>
+                <p class="text-sm text-slate-500 mt-1">Render 免费服务可能有冷启动，首次打开请等待几十秒。</p>
+            </div>
+            <a class="btn btn-primary" href="${RENDER_DEMO_URL}" target="_blank" rel="noopener">
+                <i data-lucide="external-link" class="w-4 h-4"></i> 打开实时 Demo
+            </a>
+        </div>
+    `;
 }
 
 function itemPayload(item){
@@ -428,7 +474,7 @@ function renderLeaderboard(){
                                 <td class="py-3 px-3">
                                     <div class="flex items-center gap-3 min-w-[260px]">
                                         <div class="w-16 h-9 rounded-md overflow-hidden border border-[#dbe3ef] bg-[#f8fafc] shrink-0">
-                                            ${item.image ? `<img src="${esc(item.image)}" class="w-full h-full object-cover" alt="">` : `<div class="media-placeholder">HOT</div>`}
+                                            ${imageTag(item.image, 'w-full h-full object-cover', item.title)}
                                         </div>
                                         <div class="font-semibold text-white line-clamp-2">${esc(item.title)}</div>
                                     </div>
@@ -452,7 +498,7 @@ function renderHero(){
     $('heroCard').innerHTML = `
         <div class="grid gap-5 lg:grid-cols-[220px_1fr_auto] lg:items-center">
             <div class="h-32 rounded-lg border border-[#dbe3ef] bg-[#f8fafc] overflow-hidden">
-                ${hero.image ? `<img src="${esc(hero.image)}" alt="" class="w-full h-full object-cover">` : `<div class="media-placeholder">精选内容</div>`}
+                ${imageTag(hero.image, 'w-full h-full object-cover', hero.title)}
             </div>
             <div>
                 <div class="flex flex-wrap gap-2 mb-3">
@@ -484,7 +530,7 @@ function renderOpportunities(){
         <article class="opportunity text-left p-3 cursor-pointer ${state.selected?.id === item.id ? 'active' : ''}" onclick='openContentPack(${itemPayload(item)})'>
             <div class="flex items-start gap-3">
                 <div class="w-16 h-12 rounded-md bg-[#f8fafc] border border-[#dbe3ef] overflow-hidden shrink-0">
-                    ${item.image ? `<img src="${esc(item.image)}" class="w-full h-full object-cover" alt="">` : `<div class="media-placeholder">精选</div>`}
+                    ${imageTag(item.image, 'w-full h-full object-cover', item.title)}
                 </div>
                 <div class="min-w-0">
                     <div class="flex items-center gap-2 mb-1">
