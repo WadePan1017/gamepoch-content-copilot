@@ -21,7 +21,7 @@ from fastapi.templating import Jinja2Templates
 app = FastAPI(title="GamePoch Content Copilot", version="4.0.0")
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static"), check_dir=False), name="static")
 
 # ============================================================
 # Steam API
