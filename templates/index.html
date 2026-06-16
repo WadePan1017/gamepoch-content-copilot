@@ -127,6 +127,8 @@
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6" id="statsGrid"></div>
+                            <div id="sourceStatusCard" class="mt-4"></div>
+                            <div id="quickGenerateCard" class="mt-4"></div>
                             <div class="grid gap-3 md:grid-cols-4 mt-4">
                                 <div class="task-card">
                                     <div class="text-xs font-semibold text-sky-300 mb-2">视频剪辑</div>
@@ -358,6 +360,8 @@ async function loadAll(force=false){
 function renderAll(){
     renderLiveDemoBanner();
     renderStats();
+    renderSourceStatus();
+    renderQuickGenerate();
     renderDemoPath();
     renderLeaderboard();
     renderHero();
@@ -367,6 +371,41 @@ function renderAll(){
     renderEventShell();
     renderCalendar();
     renderChart();
+}
+
+function renderSourceStatus(){
+    const status = state.data?.source_status || {};
+    const live = status.live_items || 0;
+    const steam = status.steam_items || 0;
+    const news = status.news_items_raw || 0;
+    const fallback = status.fallback_items || 0;
+    $('sourceStatusCard').innerHTML = `
+        <div class="panel-soft p-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div>
+                    <div class="chip mb-2"><i data-lucide="database-zap" class="w-3.5 h-3.5"></i> 实时数据源</div>
+                    <div class="text-sm font-semibold text-white">已实时抓取 Steam ${esc(steam)} 条 / 海外资讯 ${esc(news)} 条，筛选出 ${esc(live)} 条可用内容线索。</div>
+                    <div class="text-xs text-slate-500 mt-1">数据源：Steam Store API、Steam Reviews、IGN、GameSpot、PC Gamer、Kotaku；精选兜底 ${esc(fallback)} 条用于保证演示稳定。</div>
+                </div>
+                <button class="btn btn-secondary" onclick="loadAll(true)"><i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新抓取</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderQuickGenerate(){
+    $('quickGenerateCard').innerHTML = `
+        <div class="panel-soft p-4">
+            <div class="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div>
+                    <div class="chip mb-2"><i data-lucide="wand-sparkles" class="w-3.5 h-3.5"></i> 输入游戏名，生成内容包</div>
+                    <label class="block text-sm font-semibold text-white mb-2" for="homeTopicInput">现场演示用：输入一个他们熟悉的游戏名，直接生成标题、脚本、素材清单和剪辑工作单。</label>
+                    <input id="homeTopicInput" class="w-full rounded-lg border border-[#dbe3ef] bg-white px-3 py-3 text-sm outline-none focus:border-blue-400" placeholder="例如：拳皇15、艾尔登法环、Phantom Blade Zero">
+                </div>
+                <button class="btn btn-primary h-12" onclick="generateHomeTopic()"><i data-lucide="sparkles" class="w-4 h-4"></i> 生成内容包</button>
+            </div>
+        </div>
+    `;
 }
 
 function renderLiveDemoBanner(){
@@ -468,7 +507,7 @@ function renderLeaderboard(){
                 </thead>
                 <tbody>
                     ${list.map((item, index) => {
-                        const action = item.type === 'news' ? '整理海外摘要 / 做日报' : (index < 3 ? '今天先剪30秒短视频' : '加入选题池观察');
+                        const action = actionLabel(item).replace('建议动作：', '');
                         const trend = item.trend || (index < 3 ? '+24%' : index < 6 ? '+12%' : '+6%');
                         return `
                             <tr class="border-b border-[#e2e8f0]/70 hover:bg-[#f8fbff] cursor-pointer" onclick='openContentPack(${itemPayload(item)})'>
@@ -526,6 +565,28 @@ function visibleOpportunities(){
     return list.filter(item => item.type === state.filter);
 }
 
+function sourceLabel(item){
+    if(item.source === 'Steam' || item.bucket === 'top_sellers') return '来源：Steam 实时榜单';
+    if(item.bucket === 'new_releases') return '来源：Steam 新品';
+    if(item.bucket === 'specials') return '来源：Steam 特惠';
+    if(item.type === 'news') return `来源：${item.source || '海外资讯'} RSS`;
+    if(String(item.id || '').startsWith('curated-')) return '来源：精选样例 / 演示兜底';
+    return `来源：${item.source || '内容雷达'}`;
+}
+
+function actionLabel(item){
+    if(item.type === 'news') return '建议动作：整理中文摘要，转成日报和短视频口播';
+    if(item.heat >= 88) return '建议动作：今天先剪 30 秒短视频测试反馈';
+    if(item.bucket === 'new_releases') return '建议动作：做首发信息整合和购买建议';
+    if(item.bucket === 'specials') return '建议动作：做促销提醒和入坑建议';
+    return '建议动作：加入选题池，观察讨论增长';
+}
+
+function outputLabel(item){
+    const formats = item.recommended_formats || [];
+    return `可产出：${formats.slice(0, 3).join(' / ') || '标题 / 脚本 / 简报条目'}`;
+}
+
 function renderOpportunities(){
     const list = visibleOpportunities();
     $('opportunityGrid').innerHTML = list.map(item => `
@@ -543,6 +604,11 @@ function renderOpportunities(){
                 </div>
             </div>
             <p class="mt-3 text-xs leading-5 text-slate-500 line-clamp-3">${esc(item.summary)}</p>
+            <div class="mt-3 space-y-1 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-2 text-[11px] leading-5 text-slate-500">
+                <div>${esc(sourceLabel(item))}</div>
+                <div>${esc(actionLabel(item))}</div>
+                <div>${esc(outputLabel(item))}</div>
+            </div>
             <div class="mt-3 flex flex-wrap gap-1.5">${(item.tags || []).map(tag => `<span class="chip">${esc(tag)}</span>`).join('')}</div>
             <div class="mt-3 flex gap-2">
                 <button class="btn btn-secondary flex-1" onclick='event.stopPropagation();selectOpportunity(${itemPayload(item)})'>看分析</button>
@@ -565,6 +631,16 @@ async function openContentPack(item){
     selectOpportunity(item);
     await generateFor(item);
     jumpTo('generator');
+}
+
+async function generateHomeTopic(){
+    const input = $('homeTopicInput');
+    const value = input?.value?.trim();
+    if(!value){
+        input?.focus();
+        return;
+    }
+    await customGenerate(value);
 }
 
 function renderAnalysis(){
