@@ -6,3 +6,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
     healthCheckPath: /api/demo/status
+    envVars:
+      - key: TZ
+        value: Asia/Shanghai
